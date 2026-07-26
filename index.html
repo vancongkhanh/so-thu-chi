@@ -78,6 +78,11 @@
     width:100%;padding:12px 12px;border-radius:10px;border:1.5px solid var(--paper-line);
     background:#fffef9;font-family:'Space Mono',monospace;font-size:16px;color:var(--ink);
   }
+  select{
+    width:100%;padding:12px 12px;border-radius:10px;border:1.5px solid var(--paper-line);
+    background:#fffef9;font-family:'Space Mono',monospace;font-size:15px;color:var(--ink);
+  }
+  select:focus{outline:2px solid var(--gold);outline-offset:1px;}
   input:focus{outline:2px solid var(--gold);outline-offset:1px;}
   .field.thu input{border-color:var(--green-soft);}
   .field.chi input{border-color:var(--red-soft);}
@@ -155,6 +160,15 @@
   .donut-hole .lbl{font-size:9.5px;color:var(--ink-soft);}
   .donut-legend{font-size:13px;}
   .donut-legend div{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-family:'Space Mono',monospace;}
+
+  .ymtable{border-collapse:collapse;width:100%;margin-bottom:12px;}
+  .ymtable th,.ymtable td{padding:9px 8px;text-align:right;font-family:'Space Mono',monospace;font-size:13px;border-bottom:1px solid var(--paper-line);}
+  .ymtable th:first-child,.ymtable td:first-child{text-align:left;font-family:'Inter';font-size:12.5px;color:var(--ink-soft);}
+  .ymtable th{font-family:'Inter';font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.02em;font-weight:700;}
+  .ymtable td.thu{color:var(--green);}
+  .ymtable td.chi{color:var(--red);}
+  .ymtable tr.ym-strong td{font-weight:700;background:var(--paper);}
+  .ymtable tr.ym-divider td{padding:0;border-bottom:none;height:2px;}
 
   .toggle2{display:flex;gap:8px;margin-bottom:14px;}
   .toggle2 button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--paper-line);background:#fffef9;font-size:13px;font-weight:600;color:var(--ink-soft);}
@@ -364,6 +378,48 @@
     </div>
 
     <div class="card">
+      <h2>Thống kê theo tháng</h2>
+      <div class="field">
+        <label>Chọn tháng</label>
+        <select id="monthSelect"></select>
+      </div>
+      <table class="ymtable">
+        <thead>
+          <tr><th></th><th>Tiền mặt</th><th>Chuyển khoản</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Thu</td>
+            <td class="thu" id="ymThuTm">0</td>
+            <td class="thu" id="ymThuCk">0</td>
+          </tr>
+          <tr>
+            <td>Chi</td>
+            <td class="chi" id="ymChiTm">0</td>
+            <td class="chi" id="ymChiCk">0</td>
+          </tr>
+          <tr class="ym-strong">
+            <td>Lãi tháng này</td>
+            <td id="ymLaiTm">0</td>
+            <td id="ymLaiCk">0</td>
+          </tr>
+          <tr class="ym-divider"><td colspan="3"></td></tr>
+          <tr>
+            <td id="ymPrevLabel">Lũy kế đến hết tháng trước</td>
+            <td id="ymPrevTm">0</td>
+            <td id="ymPrevCk">0</td>
+          </tr>
+          <tr class="ym-strong">
+            <td>Lũy kế đến hết tháng này</td>
+            <td id="ymCumTm">0</td>
+            <td id="ymCumCk">0</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="hint" style="margin-bottom:0;">Lũy kế tính từ đầu năm của tháng đang chọn, tự reset về 0 khi sang năm mới.</p>
+    </div>
+
+    <div class="card">
       <h2>Tỷ lệ tiền mặt / chuyển khoản</h2>
       <div class="toggle2">
         <button id="donutThuBtn" class="active">Thu</button>
@@ -383,7 +439,7 @@
       <button class="btn btn-ghost" id="exportBtn">Tải file CSV</button>
     </div>
 
-    <div class="card">
+    <div class="card" style="display:none;">
       <h2>Nhập / cập nhật dữ liệu</h2>
       <p class="hint" style="margin-top:0;">Dán dữ liệu CSV (do Claude cung cấp, hoặc xuất từ chính app này) vào ô bên dưới rồi bấm Nhập. Không cần publish lại — dữ liệu lưu ngay lập tức.</p>
       <textarea id="importText" rows="4" placeholder="Ngày,Thu tiền mặt,Thu chuyển khoản,Chi tiền mặt,Chi chuyển khoản,Ghi chú"></textarea>
@@ -548,6 +604,32 @@ function setStorageWarning(show){
   if(el) el.style.display = show? 'block':'none';
 }
 
+// One-off historical figures supplied after the main import (e.g. a prior year's
+// closing totals). Only ever ADDS a date that isn't already present — never
+// overwrites anything that's already there.
+// Số dư mang sang đầu năm (từ tháng 12 năm trước), dùng làm điểm bắt đầu cho
+// lũy kế của năm đó thay vì bắt đầu từ 0. Thêm năm khác vào đây nếu cần sau này.
+const OPENING_BALANCES = {
+  '2026': { tm: 13076000, ck: 182000 }
+};
+
+const ADDITIONAL_ENTRIES = [
+  {date:'2025-12-31', thu_tm:13076000, thu_ck:182000, chi_tm:0, chi_ck:0, note:'Số liệu tổng tháng 12/2025'}
+];
+
+function mergeAdditionalData(){
+  const existingDates = new Set(entries.map(e=>e.date));
+  let changed = false;
+  ADDITIONAL_ENTRIES.forEach(a=>{
+    if(!existingDates.has(a.date)){
+      entries.push({id:'extra-'+a.date, date:a.date, thu_tm:a.thu_tm, thu_ck:a.thu_ck, chi_tm:a.chi_tm, chi_ck:a.chi_ck, note:a.note||''});
+      if(!lockedDates.includes(a.date)) lockedDates.push(a.date);
+      changed = true;
+    }
+  });
+  return changed;
+}
+
 async function loadEntries(){
   await initFirebase();
   if(!fbReady){
@@ -557,7 +639,7 @@ async function loadEntries(){
     return;
   }
 
-  fbDocRef.onSnapshot((doc)=>{
+  fbDocRef.onSnapshot(async (doc)=>{
     if(fbSuppressNextSnapshot){
       // This snapshot is just an echo of our own write; state is already correct.
       fbSuppressNextSnapshot = false;
@@ -568,6 +650,9 @@ async function loadEntries(){
       entries = data.entries || [];
       transactions = data.transactions || [];
       lockedDates = data.lockedDates || [];
+      if(mergeAdditionalData()){
+        await persistAll();
+      }
       render();
     }else{
       seedFirstRun();
@@ -581,6 +666,7 @@ async function seedFirstRun(){
   entries = SEED_DATA.slice();
   transactions = [];
   lockedDates = [...new Set(entries.map(e=>e.date))];
+  mergeAdditionalData();
   await persistAll();
   render();
 }
@@ -818,7 +904,76 @@ function buildLineChartSVG(labels, thuArr, chiArr){
   return svg;
 }
 
+let selectedYm = '';
+
+function getMonthlyTotals(){
+  const byMonth = {};
+  entries.forEach(e=>{
+    const ym = e.date.slice(0,7);
+    byMonth[ym] = byMonth[ym] || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0};
+    byMonth[ym].thu_tm += e.thu_tm;
+    byMonth[ym].thu_ck += e.thu_ck;
+    byMonth[ym].chi_tm += e.chi_tm;
+    byMonth[ym].chi_ck += e.chi_ck;
+  });
+  return byMonth;
+}
+
+function populateMonthSelect(){
+  const byMonth = getMonthlyTotals();
+  const currentYm = todayISO().slice(0,7);
+  const months = new Set(Object.keys(byMonth));
+  months.add(currentYm); // always allow selecting the current month even with no data yet
+  const sortedMonths = [...months].sort().reverse(); // newest first
+
+  const sel = $('monthSelect');
+  const prevSelection = selectedYm || currentYm;
+  sel.innerHTML = sortedMonths.map(ym=>
+    `<option value="${ym}">Tháng ${parseInt(ym.slice(5,7),10)} - ${ym.slice(0,4)}</option>`
+  ).join('');
+  selectedYm = sortedMonths.includes(prevSelection) ? prevSelection : sortedMonths[0];
+  sel.value = selectedYm;
+}
+
+function renderMonthlyTable(){
+  populateMonthSelect();
+  const byMonth = getMonthlyTotals();
+  const ym = selectedYm;
+  const year = ym.slice(0,4);
+  const monthNum = parseInt(ym.slice(5,7),10);
+
+  const cur = byMonth[ym] || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0};
+  const laiTm = cur.thu_tm - cur.chi_tm;
+  const laiCk = cur.thu_ck - cur.chi_ck;
+
+  // Cumulative starts from this year's opening balance (số dư mang sang từ năm
+  // trước, nếu có khai báo trong OPENING_BALANCES), rồi cộng dồn từ tháng 1
+  // đến hết tháng trước tháng đang chọn.
+  const opening = OPENING_BALANCES[year] || {tm:0, ck:0};
+  let prevCumTm=opening.tm, prevCumCk=opening.ck;
+  for(let m=1; m<monthNum; m++){
+    const key = year+'-'+String(m).padStart(2,'0');
+    const d = byMonth[key];
+    if(d){ prevCumTm += (d.thu_tm-d.chi_tm); prevCumCk += (d.thu_ck-d.chi_ck); }
+  }
+  const cumTm = prevCumTm + laiTm;
+  const cumCk = prevCumCk + laiCk;
+
+  $('ymThuTm').textContent = fmt(cur.thu_tm);
+  $('ymThuCk').textContent = fmt(cur.thu_ck);
+  $('ymChiTm').textContent = fmt(cur.chi_tm);
+  $('ymChiCk').textContent = fmt(cur.chi_ck);
+  $('ymLaiTm').textContent = fmt(laiTm);
+  $('ymLaiCk').textContent = fmt(laiCk);
+  $('ymPrevLabel').textContent = monthNum===1 ? `Lũy kế đầu năm ${year}` : `Lũy kế đến hết tháng ${monthNum-1}`;
+  $('ymPrevTm').textContent = fmt(prevCumTm);
+  $('ymPrevCk').textContent = fmt(prevCumCk);
+  $('ymCumTm').textContent = fmt(cumTm);
+  $('ymCumCk').textContent = fmt(cumCk);
+}
+
 function renderStats(){
+  renderMonthlyTable();
   const data=filteredForRange();
   const sThu=data.reduce((s,e)=>s+e.thu_tm+e.thu_ck,0);
   const sChi=data.reduce((s,e)=>s+e.chi_tm+e.chi_ck,0);
@@ -1051,6 +1206,10 @@ $('donutThuBtn').addEventListener('click',()=>{
 });
 $('donutChiBtn').addEventListener('click',()=>{
   donutMode='chi'; $('donutChiBtn').classList.add('active'); $('donutThuBtn').classList.remove('active'); renderStats();
+});
+$('monthSelect').addEventListener('change',()=>{
+  selectedYm = $('monthSelect').value;
+  renderMonthlyTable();
 });
 $('exportBtn').addEventListener('click',exportCSV);
 $('importBtn').addEventListener('click',importData);
