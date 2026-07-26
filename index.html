@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Sổ Thu Chi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20302c;
+    --ink-soft:#4b5a55;
+    --paper:#f3efe6;
+    --paper-line:#e1d9c6;
+    --card:#fffdf8;
+    --red:#a63d2f;
+    --red-soft:#f1ded9;
+    --green:#3f6b4a;
+    --green-soft:#dee7de;
+    --gold:#a9822f;
+    --gold-soft:#efe4c9;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: #ffffff;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-bottom:24px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:14px 14px 40px;}
+
+  header{display:flex;align-items:center;gap:12px;padding:6px 2px 14px;}
+  .stamp{
+    width:52px;height:52px;border-radius:50%;
+    border:2.5px solid var(--red);
+    color:var(--red);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:15px;
+    transform:rotate(-9deg);
+    flex:none;
+    opacity:.92;
+    position:relative;
+  }
+  .stamp::after{
+    content:"";position:absolute;inset:-6px;border-radius:50%;
+    border:1px dashed var(--red);opacity:.5;
+  }
+  header h1{font-family:'Space Mono',monospace;font-size:20px;margin:0;letter-spacing:.5px;}
+  header .sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+
+  .tabs{display:flex;background:var(--card);border-radius:999px;padding:4px;border:1px solid var(--paper-line);margin-bottom:16px;}
+  .tabs button{
+    flex:1;border:none;background:none;padding:10px 0;border-radius:999px;
+    font-family:'Inter';font-weight:600;font-size:14px;color:var(--ink-soft);
+  }
+  .tabs button.active{background:var(--ink);color:var(--paper);}
+
+  .card{
+    background:var(--card);border:1px solid var(--paper-line);
+    border-radius:var(--radius);padding:16px;margin-bottom:14px;
+    box-shadow:0 1px 0 rgba(0,0,0,.03);
+  }
+  .card h2{
+    font-family:'Space Mono',monospace;font-size:13px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--ink-soft);margin:0 0 12px;
+  }
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:600;}
+  .field{margin-bottom:12px;}
+  .field.thu label{color:var(--green);}
+  .field.chi label{color:var(--red);}
+  input[type=text]{
+    width:100%;padding:12px 12px;border-radius:10px;border:1.5px solid var(--paper-line);
+    background:#fffef9;font-family:'Space Mono',monospace;font-size:16px;color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .field.thu input{border-color:var(--green-soft);}
+  .field.chi input{border-color:var(--red-soft);}
+  textarea{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--paper-line);font-family:'Inter';font-size:14px;resize:none;background:#fffef9;}
+  .btn{
+    width:100%;padding:14px;border:none;border-radius:12px;font-weight:700;font-size:15px;
+    font-family:'Inter';cursor:pointer;
+  }
+  .btn-primary{background:var(--ink);color:var(--paper);}
+  .btn-danger{background:var(--red-soft);color:var(--red);}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--paper-line);}
+  .btn-row{display:flex;gap:10px;margin-top:4px;}
+  .btn-row .btn{flex:1;}
+
+  .date-field{position:relative;}
+  .date-display{
+    width:100%;padding:12px 12px;border-radius:10px;border:1.5px solid var(--paper-line);
+    background:#fffef9;font-family:'Space Mono',monospace;font-size:16px;color:var(--ink);
+    display:flex;align-items:center;justify-content:space-between;pointer-events:none;
+  }
+  .date-display .cal{color:var(--gold);font-size:15px;}
+  input[type=date]{
+    position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;padding:0;margin:0;
+  }
+
+  .stat-row{display:flex;gap:10px;}
+  .stat{flex:1;text-align:center;padding:10px 4px;border-radius:10px;}
+  .stat .v{font-family:'Space Mono',monospace;font-weight:700;font-size:15px;}
+  .stat .l{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  .stat.thu{background:var(--green-soft);} .stat.thu .v{color:var(--green);}
+  .stat.chi{background:var(--red-soft);} .stat.chi .v{color:var(--red);}
+  .stat.lai{background:var(--gold-soft);} .stat.lai .v{color:var(--gold);}
+
+  .entry{
+    display:grid;grid-template-columns:74px 1fr 1fr 1fr;gap:4px;align-items:center;
+    padding:9px 2px;border-bottom:1px dashed var(--paper-line);cursor:pointer;
+  }
+  .entry:last-child{border-bottom:none;}
+  .entry .d{font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .entry .col{font-family:'Space Mono',monospace;font-size:12px;text-align:right;}
+  .entry .col.thu{color:var(--green);}
+  .entry .col.chi{color:var(--red);}
+  .entry .col.lai{font-weight:700;}
+  .entry .col.lai.pos{color:var(--green);}
+  .entry .col.lai.neg{color:var(--red);}
+  .entry-head{
+    display:grid;grid-template-columns:74px 1fr 1fr 1fr;gap:4px;
+    font-size:10.5px;color:var(--ink-soft);font-weight:700;
+    text-transform:uppercase;letter-spacing:.03em;padding:0 2px 8px;border-bottom:1px solid var(--paper-line);margin-bottom:2px;
+  }
+  .entry-head span:not(:first-child){text-align:right;}
+  .empty{text-align:center;color:var(--ink-soft);font-size:13px;padding:20px 0;}
+  #recentList{max-height:420px;overflow-y:auto;}
+
+  .pills{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .pill{
+    padding:8px 14px;border-radius:999px;border:1px solid var(--paper-line);
+    background:var(--card);font-size:13px;font-weight:600;color:var(--ink-soft);
+  }
+  .pill.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+
+  .bars{overflow-x:auto;padding:4px 2px 0;}
+  .bars svg{display:block;}
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+
+  .donut-row{display:flex;align-items:center;gap:20px;justify-content:center;}
+  .donut{
+    width:130px;height:130px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .donut-hole{width:78px;height:78px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .donut-hole .pct{font-family:'Space Mono',monospace;font-weight:700;font-size:15px;}
+  .donut-hole .lbl{font-size:9.5px;color:var(--ink-soft);}
+  .donut-legend{font-size:13px;}
+  .donut-legend div{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-family:'Space Mono',monospace;}
+
+  .toggle2{display:flex;gap:8px;margin-bottom:14px;}
+  .toggle2 button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--paper-line);background:#fffef9;font-size:13px;font-weight:600;color:var(--ink-soft);}
+  .toggle2 button.active{background:var(--gold-soft);color:var(--gold);border-color:var(--gold);}
+
+  .grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .combo-btn{
+    display:flex;align-items:center;gap:10px;padding:12px 10px;border-radius:12px;
+    border:1.5px solid var(--paper-line);background:#fffef9;font-size:12.5px;font-weight:600;
+    color:var(--ink-soft);line-height:1.3;text-align:left;
+  }
+  .combo-btn .ico{font-size:20px;flex:none;opacity:.55;}
+  .combo-btn.thu.active{background:var(--green-soft);color:var(--green);border-color:var(--green);}
+  .combo-btn.thu.active .ico{opacity:1;}
+  .combo-btn.chi.active{background:var(--red-soft);color:var(--red);border-color:var(--red);}
+  .combo-btn.chi.active .ico{opacity:1;}
+
+  .tx-row{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px dashed var(--paper-line);}
+  .tx-row:last-child{border-bottom:none;}
+  .tx-row .tx-main{flex:1;display:flex;align-items:center;flex-wrap:wrap;font-size:13px;}
+  .tx-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-right:8px;white-space:nowrap;}
+  .tx-badge.thu{background:var(--green-soft);color:var(--green);}
+  .tx-badge.chi{background:var(--red-soft);color:var(--red);}
+  .tx-amt{font-family:'Space Mono',monospace;font-weight:700;margin-right:8px;}
+  .tx-note{color:var(--ink-soft);font-size:12px;}
+  .tx-del{background:none;border:none;color:var(--red);font-size:16px;padding:2px 8px;flex:none;}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(20,30,28,.4);display:flex;align-items:flex-end;justify-content:center;z-index:50;}
+  .modal{background:var(--card);border-radius:16px 16px 0 0;padding:18px;width:100%;max-width:480px;max-height:88vh;overflow:auto;}
+  .modal h3{font-family:'Space Mono',monospace;margin:0 0 14px;}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:-6px;margin-bottom:14px;line-height:1.5;}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAagqQksxKgTNZvbpjRMnKVLumw0sQ05VQ",
+    authDomain: "so-thu-chi-khanh-ha.firebaseapp.com",
+    projectId: "so-thu-chi-khanh-ha",
+    storageBucket: "so-thu-chi-khanh-ha.firebasestorage.app",
+    messagingSenderId: "986945310607",
+    appId: "1:986945310607:web:31094b5a738da1a79805fa",
+    measurementId: "G-1E4RZFMQ1Z"
+  };
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="stamp">KH</div>
+    <div>
+      <h1>Sổ Thu Chi</h1>
+      <div class="sub" id="todayLabel">—</div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button id="tabEntryBtn" class="active">Nhập liệu</button>
+    <button id="tabStatsBtn">Thống kê</button>
+  </div>
+
+  <div id="storageWarning" style="display:none;background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.5;">
+    Không kết nối được với máy chủ dữ liệu (kiểm tra Internet). Dữ liệu vẫn dùng được tạm trong phiên này nhưng có thể chưa đồng bộ — thử tải lại trang khi có mạng.
+  </div>
+
+  <div id="tabEntry">
+    <div class="card">
+      <h2 id="entryCardTitle">Nhập khoản thu/chi</h2>
+      <div class="field">
+        <label>Ngày</label>
+        <div class="date-field">
+          <div class="date-display"><span id="fDateDisplay">—</span><span class="cal">📅</span></div>
+          <input type="date" id="fDate">
+        </div>
+      </div>
+
+      <div id="lockedView" style="display:none;">
+        <div class="stat-row">
+          <div class="stat thu"><div class="v" id="lockedThu">0</div><div class="l">Thu</div></div>
+          <div class="stat chi"><div class="v" id="lockedChi">0</div><div class="l">Chi</div></div>
+          <div class="stat lai"><div class="v" id="lockedLai">0</div><div class="l">Lãi</div></div>
+        </div>
+        <p class="hint" style="margin-top:10px;margin-bottom:0;">🔒 Ngày này đã chốt số liệu, không thể thêm/sửa khoản.</p>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn btn-ghost" id="unlockBtn">Mở lại để sửa</button>
+        </div>
+      </div>
+
+      <div id="unlockedView">
+        <label style="display:block;font-size:12px;color:var(--ink-soft);margin-bottom:6px;font-weight:600;">Loại khoản</label>
+        <div class="grid4" id="comboToggle">
+          <button class="combo-btn thu active" data-type="thu" data-method="tm">
+            <span class="ico">💵</span><span>Thu<br>Tiền mặt</span>
+          </button>
+          <button class="combo-btn thu" data-type="thu" data-method="ck">
+            <span class="ico">🏦</span><span>Thu<br>Chuyển khoản</span>
+          </button>
+          <button class="combo-btn chi" data-type="chi" data-method="tm">
+            <span class="ico">💵</span><span>Chi<br>Tiền mặt</span>
+          </button>
+          <button class="combo-btn chi" data-type="chi" data-method="ck">
+            <span class="ico">🏦</span><span>Chi<br>Chuyển khoản</span>
+          </button>
+        </div>
+        <div class="field">
+          <label>Số tiền</label>
+          <input type="text" inputmode="numeric" id="txAmount" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Ghi chú (không bắt buộc)</label>
+          <input type="text" id="txNote" placeholder="VD: Anh Khoa, tiền hàng...">
+        </div>
+        <button class="btn btn-primary" id="addTxBtn">+ Thêm khoản</button>
+
+        <div id="txList" style="margin-top:14px;"></div>
+
+        <div class="stat-row" style="margin-top:14px;">
+          <div class="stat thu"><div class="v" id="liveThu">0</div><div class="l">Thu</div></div>
+          <div class="stat chi"><div class="v" id="liveChi">0</div><div class="l">Chi</div></div>
+          <div class="stat lai"><div class="v" id="liveLai">0</div><div class="l">Lãi</div></div>
+        </div>
+
+        <button class="btn btn-primary" id="finalizeBtn" style="margin-top:12px;">🔒 Chốt số liệu ngày</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Thống kê tháng hiện tại</h2>
+      <div class="stat-row">
+        <div class="stat thu"><div class="v" id="tdThu">0</div><div class="l">Thu</div></div>
+        <div class="stat chi"><div class="v" id="tdChi">0</div><div class="l">Chi</div></div>
+        <div class="stat lai"><div class="v" id="tdLai">0</div><div class="l">Lãi</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Lịch sử</h2>
+      <div class="pills" id="recentPills">
+        <button class="pill active" data-r="month">Tháng này</button>
+        <button class="pill" data-r="7">7 ngày</button>
+        <button class="pill" data-r="30">30 ngày</button>
+        <button class="pill" data-r="year">Năm nay</button>
+      </div>
+      <div class="row2" style="margin-bottom:10px;">
+        <div class="field" style="margin-bottom:0;">
+          <label>Từ ngày</label>
+          <div class="date-field">
+            <div class="date-display"><span id="fFromDisplay">—</span><span class="cal">📅</span></div>
+            <input type="date" id="fFrom">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Đến ngày</label>
+          <div class="date-field">
+            <div class="date-display"><span id="fToDisplay">—</span><span class="cal">📅</span></div>
+            <input type="date" id="fTo">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" id="clearFilterBtn" style="margin-bottom:12px;">Bỏ lọc ngày tuỳ chỉnh</button>
+      <div class="entry-head"><span>Ngày</span><span>Thu</span><span>Chi</span><span>Lãi</span></div>
+      <div id="recentList"><div class="empty">Chưa có dữ liệu</div></div>
+    </div>
+  </div>
+
+  <div id="tabStats" style="display:none;">
+    <div class="pills" id="rangePills">
+      <button class="pill active" data-r="month">Tháng này</button>
+      <button class="pill" data-r="7">7 ngày</button>
+      <button class="pill" data-r="30">30 ngày</button>
+      <button class="pill" data-r="year">Năm nay</button>
+    </div>
+    <div class="row2" style="margin-bottom:10px;">
+      <div class="field" style="margin-bottom:0;">
+        <label>Từ ngày</label>
+        <div class="date-field">
+          <div class="date-display"><span id="fFromStatsDisplay">—</span><span class="cal">📅</span></div>
+          <input type="date" id="fFromStats">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Đến ngày</label>
+        <div class="date-field">
+          <div class="date-display"><span id="fToStatsDisplay">—</span><span class="cal">📅</span></div>
+          <input type="date" id="fToStats">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" id="clearFilterStatsBtn" style="margin-bottom:14px;">Bỏ lọc ngày tuỳ chỉnh</button>
+
+    <div class="card">
+      <div class="stat-row">
+        <div class="stat thu"><div class="v" id="sThu">0</div><div class="l">Tổng thu</div></div>
+        <div class="stat chi"><div class="v" id="sChi">0</div><div class="l">Tổng chi</div></div>
+        <div class="stat lai"><div class="v" id="sLai">0</div><div class="l">Lãi/Lỗ</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Thu / Chi theo thời gian</h2>
+      <div class="bars" id="barsWrap"></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--green)"></i>Thu</span>
+        <span><i class="dot" style="background:var(--red)"></i>Chi</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tỷ lệ tiền mặt / chuyển khoản</h2>
+      <div class="toggle2">
+        <button id="donutThuBtn" class="active">Thu</button>
+        <button id="donutChiBtn">Chi</button>
+      </div>
+      <div class="donut-row">
+        <div class="donut" id="donutEl"><div class="donut-hole"><div class="pct" id="donutPct">0%</div><div class="lbl">tiền mặt</div></div></div>
+        <div class="donut-legend">
+          <div><i class="dot" style="background:var(--gold)"></i>Tiền mặt: <span id="donutTmVal">0</span></div>
+          <div><i class="dot" style="background:var(--ink)"></i>Chuyển khoản: <span id="donutCkVal">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Xuất dữ liệu</h2>
+      <button class="btn btn-ghost" id="exportBtn">Tải file CSV</button>
+    </div>
+
+    <div class="card">
+      <h2>Nhập / cập nhật dữ liệu</h2>
+      <p class="hint" style="margin-top:0;">Dán dữ liệu CSV (do Claude cung cấp, hoặc xuất từ chính app này) vào ô bên dưới rồi bấm Nhập. Không cần publish lại — dữ liệu lưu ngay lập tức.</p>
+      <textarea id="importText" rows="4" placeholder="Ngày,Thu tiền mặt,Thu chuyển khoản,Chi tiền mặt,Chi chuyển khoản,Ghi chú"></textarea>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-primary" id="importBtn">Nhập dữ liệu</button>
+      </div>
+      <div id="importResult" class="hint" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+
+<script>
+const SEED_DATA = [{"id": "seed-2026-01-01", "date": "2026-01-01", "thu_tm": 2000000, "thu_ck": 320000, "chi_tm": 5532000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-02", "date": "2026-01-02", "thu_tm": 0, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": "Nghỉ lễ"}, {"id": "seed-2026-01-04", "date": "2026-01-04", "thu_tm": 2100000, "thu_ck": 30000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-05", "date": "2026-01-05", "thu_tm": 2275000, "thu_ck": 225000, "chi_tm": 7444000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-06", "date": "2026-01-06", "thu_tm": 2900000, "thu_ck": 950000, "chi_tm": 1055000, "chi_ck": 1190000, "note": ""}, {"id": "seed-2026-01-07", "date": "2026-01-07", "thu_tm": 2350000, "thu_ck": 280000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-08", "date": "2026-01-08", "thu_tm": 2250000, "thu_ck": 630000, "chi_tm": 2905000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-09", "date": "2026-01-09", "thu_tm": 4050000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-10", "date": "2026-01-10", "thu_tm": 2650000, "thu_ck": 100000, "chi_tm": 1711000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-11", "date": "2026-01-11", "thu_tm": 1500000, "thu_ck": 475000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-12", "date": "2026-01-12", "thu_tm": 2200000, "thu_ck": 1326000, "chi_tm": 8328000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-13", "date": "2026-01-13", "thu_tm": 1450000, "thu_ck": 276000, "chi_tm": 3735000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-14", "date": "2026-01-14", "thu_tm": 4100000, "thu_ck": 655000, "chi_tm": 909000, "chi_ck": 3466000, "note": ""}, {"id": "seed-2026-01-15", "date": "2026-01-15", "thu_tm": 6000000, "thu_ck": 80000, "chi_tm": 3171000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-16", "date": "2026-01-16", "thu_tm": 3150000, "thu_ck": 1208000, "chi_tm": 170000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-17", "date": "2026-01-17", "thu_tm": 0, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": "OFF - nghỉ"}, {"id": "seed-2026-01-18", "date": "2026-01-18", "thu_tm": 1800000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-01-19", "date": "2026-01-19", "thu_tm": 3200000, "thu_ck": 562000, "chi_tm": 5044000, "chi_ck": 380000, "note": ""}, {"id": "seed-2026-01-20", "date": "2026-01-20", "thu_tm": 1870000, "thu_ck": 135000, "chi_tm": 0, "chi_ck": 3190000, "note": ""}, {"id": "seed-2026-01-21", "date": "2026-01-21", "thu_tm": 2050000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-22", "date": "2026-01-22", "thu_tm": 3780000, "thu_ck": 480000, "chi_tm": 5774000, "chi_ck": 4600000, "note": ""}, {"id": "seed-2026-01-23", "date": "2026-01-23", "thu_tm": 3000000, "thu_ck": 221000, "chi_tm": 2800000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-24", "date": "2026-01-24", "thu_tm": 4400000, "thu_ck": 205000, "chi_tm": 1559000, "chi_ck": 8144000, "note": ""}, {"id": "seed-2026-01-25", "date": "2026-01-25", "thu_tm": 3300000, "thu_ck": 0, "chi_tm": 1430000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-26", "date": "2026-01-26", "thu_tm": 3150000, "thu_ck": 708000, "chi_tm": 2513000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-27", "date": "2026-01-27", "thu_tm": 2100000, "thu_ck": 435000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-28", "date": "2026-01-28", "thu_tm": 5550000, "thu_ck": 520000, "chi_tm": 6532000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-29", "date": "2026-01-29", "thu_tm": 3350000, "thu_ck": 0, "chi_tm": 19764000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-30", "date": "2026-01-30", "thu_tm": 5350000, "thu_ck": 663000, "chi_tm": 3935000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-01-31", "date": "2026-01-31", "thu_tm": 5450000, "thu_ck": 73000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-01", "date": "2026-02-01", "thu_tm": 9100000, "thu_ck": 265000, "chi_tm": 5680000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-02", "date": "2026-02-02", "thu_tm": 9100000, "thu_ck": 295000, "chi_tm": 12592000, "chi_ck": 4000000, "note": ""}, {"id": "seed-2026-02-03", "date": "2026-02-03", "thu_tm": 7200000, "thu_ck": 570000, "chi_tm": 2383000, "chi_ck": 1442000, "note": ""}, {"id": "seed-2026-02-04", "date": "2026-02-04", "thu_tm": 3500000, "thu_ck": 1813000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-05", "date": "2026-02-05", "thu_tm": 4250000, "thu_ck": 1358000, "chi_tm": 7282000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-06", "date": "2026-02-06", "thu_tm": 5900000, "thu_ck": 222000, "chi_tm": 3497000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-07", "date": "2026-02-07", "thu_tm": 8450000, "thu_ck": 1028000, "chi_tm": 2390000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-08", "date": "2026-02-08", "thu_tm": 10021000, "thu_ck": 4349000, "chi_tm": 19354000, "chi_ck": 5400000, "note": ""}, {"id": "seed-2026-02-09", "date": "2026-02-09", "thu_tm": 4400000, "thu_ck": 1613000, "chi_tm": 6280000, "chi_ck": 0, "note": "Đêm giao thừa (?)"}, {"id": "seed-2026-02-10", "date": "2026-02-10", "thu_tm": 13000000, "thu_ck": 4868000, "chi_tm": 17460000, "chi_ck": 0, "note": "23 Âl"}, {"id": "seed-2026-02-11", "date": "2026-02-11", "thu_tm": 13450000, "thu_ck": 4080000, "chi_tm": 4293000, "chi_ck": 2960000, "note": "24 Âl"}, {"id": "seed-2026-02-12", "date": "2026-02-12", "thu_tm": 16300000, "thu_ck": 5908000, "chi_tm": 0, "chi_ck": 0, "note": "25 Âl"}, {"id": "seed-2026-02-13", "date": "2026-02-13", "thu_tm": 20500000, "thu_ck": 4147000, "chi_tm": 4711000, "chi_ck": 0, "note": "26 Âl"}, {"id": "seed-2026-02-14", "date": "2026-02-14", "thu_tm": 20500000, "thu_ck": 5173000, "chi_tm": 3530000, "chi_ck": 3395000, "note": "27 Âl"}, {"id": "seed-2026-02-15", "date": "2026-02-15", "thu_tm": 25500000, "thu_ck": 3314000, "chi_tm": 0, "chi_ck": 0, "note": "28 Âl"}, {"id": "seed-2026-02-16", "date": "2026-02-16", "thu_tm": 16550000, "thu_ck": 2140000, "chi_tm": 0, "chi_ck": 0, "note": "29 Âl"}, {"id": "seed-2026-02-18", "date": "2026-02-18", "thu_tm": 0, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": "Nghỉ Tết"}, {"id": "seed-2026-02-24", "date": "2026-02-24", "thu_tm": 2600000, "thu_ck": 20000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-25", "date": "2026-02-25", "thu_tm": 1600000, "thu_ck": 434000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-26", "date": "2026-02-26", "thu_tm": 3080000, "thu_ck": 245000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-27", "date": "2026-02-27", "thu_tm": 1150000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-02-28", "date": "2026-02-28", "thu_tm": 4450000, "thu_ck": 1808000, "chi_tm": 2545000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-01", "date": "2026-03-01", "thu_tm": 2030000, "thu_ck": 0, "chi_tm": 1570000, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-03-02", "date": "2026-03-02", "thu_tm": 3250000, "thu_ck": 1151000, "chi_tm": 7585000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-03", "date": "2026-03-03", "thu_tm": 1550000, "thu_ck": 255000, "chi_tm": 3560000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-04", "date": "2026-03-04", "thu_tm": 1050000, "thu_ck": 280000, "chi_tm": 780000, "chi_ck": 3612000, "note": ""}, {"id": "seed-2026-03-05", "date": "2026-03-05", "thu_tm": 3700000, "thu_ck": 1118000, "chi_tm": 2745000, "chi_ck": 3729000, "note": ""}, {"id": "seed-2026-03-06", "date": "2026-03-06", "thu_tm": 1050000, "thu_ck": 45000, "chi_tm": 1110000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-07", "date": "2026-03-07", "thu_tm": 1600000, "thu_ck": 175000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-08", "date": "2026-03-08", "thu_tm": 1400000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-09", "date": "2026-03-09", "thu_tm": 2300000, "thu_ck": 650000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-10", "date": "2026-03-10", "thu_tm": 1150000, "thu_ck": 323000, "chi_tm": 7825000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-11", "date": "2026-03-11", "thu_tm": 1500000, "thu_ck": 840000, "chi_tm": 600000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-12", "date": "2026-03-12", "thu_tm": 1500000, "thu_ck": 515000, "chi_tm": 2138000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-13", "date": "2026-03-13", "thu_tm": 1600000, "thu_ck": 85000, "chi_tm": 2218000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-14", "date": "2026-03-14", "thu_tm": 4600000, "thu_ck": 1075000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-15", "date": "2026-03-15", "thu_tm": 1650000, "thu_ck": 527000, "chi_tm": 3362000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-16", "date": "2026-03-16", "thu_tm": 1250000, "thu_ck": 70000, "chi_tm": 1940000, "chi_ck": 3694000, "note": ""}, {"id": "seed-2026-03-17", "date": "2026-03-17", "thu_tm": 0, "thu_ck": 0, "chi_tm": 2260000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-18", "date": "2026-03-18", "thu_tm": 0, "thu_ck": 0, "chi_tm": 1108000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-19", "date": "2026-03-19", "thu_tm": 1750000, "thu_ck": 508000, "chi_tm": 2054000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-20", "date": "2026-03-20", "thu_tm": 1950000, "thu_ck": 795000, "chi_tm": 0, "chi_ck": 1560000, "note": ""}, {"id": "seed-2026-03-21", "date": "2026-03-21", "thu_tm": 900000, "thu_ck": 585000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-22", "date": "2026-03-22", "thu_tm": 1900000, "thu_ck": 819000, "chi_tm": 200000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-23", "date": "2026-03-23", "thu_tm": 1450000, "thu_ck": 0, "chi_tm": 4847000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-24", "date": "2026-03-24", "thu_tm": 1350000, "thu_ck": 534000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-25", "date": "2026-03-25", "thu_tm": 2300000, "thu_ck": 507000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-26", "date": "2026-03-26", "thu_tm": 1650000, "thu_ck": 622000, "chi_tm": 6630000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-27", "date": "2026-03-27", "thu_tm": 1600000, "thu_ck": 137000, "chi_tm": 884000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-28", "date": "2026-03-28", "thu_tm": 740000, "thu_ck": 0, "chi_tm": 3155000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-29", "date": "2026-03-29", "thu_tm": 2350000, "thu_ck": 1320000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-30", "date": "2026-03-30", "thu_tm": 2500000, "thu_ck": 1518000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-03-31", "date": "2026-03-31", "thu_tm": 2000000, "thu_ck": 200000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-01", "date": "2026-04-01", "thu_tm": 3000000, "thu_ck": 757000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-02", "date": "2026-04-02", "thu_tm": 3200000, "thu_ck": 3404000, "chi_tm": 3406000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-03", "date": "2026-04-03", "thu_tm": 1800000, "thu_ck": 1900000, "chi_tm": 4932000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-04", "date": "2026-04-04", "thu_tm": 7000000, "thu_ck": 336000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-05", "date": "2026-04-05", "thu_tm": 1100000, "thu_ck": 188000, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-04-06", "date": "2026-04-06", "thu_tm": 2450000, "thu_ck": 1270000, "chi_tm": 4147000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-07", "date": "2026-04-07", "thu_tm": 1600000, "thu_ck": 750000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-08", "date": "2026-04-08", "thu_tm": 1250000, "thu_ck": 173000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-09", "date": "2026-04-09", "thu_tm": 600000, "thu_ck": 200000, "chi_tm": 4422000, "chi_ck": 3779000, "note": ""}, {"id": "seed-2026-04-10", "date": "2026-04-10", "thu_tm": 950000, "thu_ck": 1173000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-11", "date": "2026-04-11", "thu_tm": 3200000, "thu_ck": 150000, "chi_tm": 2774000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-12", "date": "2026-04-12", "thu_tm": 0, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật - OFF"}, {"id": "seed-2026-04-13", "date": "2026-04-13", "thu_tm": 1750000, "thu_ck": 80000, "chi_tm": 2005000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-14", "date": "2026-04-14", "thu_tm": 1850000, "thu_ck": 667000, "chi_tm": 2164000, "chi_ck": 3100000, "note": ""}, {"id": "seed-2026-04-15", "date": "2026-04-15", "thu_tm": 1950000, "thu_ck": 0, "chi_tm": 1000000, "chi_ck": 2630000, "note": ""}, {"id": "seed-2026-04-16", "date": "2026-04-16", "thu_tm": 1550000, "thu_ck": 2144000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-17", "date": "2026-04-17", "thu_tm": 3150000, "thu_ck": 892000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-18", "date": "2026-04-18", "thu_tm": 1450000, "thu_ck": 304000, "chi_tm": 1907000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-19", "date": "2026-04-19", "thu_tm": 2650000, "thu_ck": 470000, "chi_tm": 255000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-20", "date": "2026-04-20", "thu_tm": 2350000, "thu_ck": 360000, "chi_tm": 1074000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-21", "date": "2026-04-21", "thu_tm": 2900000, "thu_ck": 1402000, "chi_tm": 7584000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-22", "date": "2026-04-22", "thu_tm": 1700000, "thu_ck": 970000, "chi_tm": 96000, "chi_ck": 3138000, "note": ""}, {"id": "seed-2026-04-23", "date": "2026-04-23", "thu_tm": 1700000, "thu_ck": 1009000, "chi_tm": 1482000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-24", "date": "2026-04-24", "thu_tm": 2530000, "thu_ck": 470000, "chi_tm": 3018000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-27", "date": "2026-04-27", "thu_tm": 3450000, "thu_ck": 987000, "chi_tm": 0, "chi_ck": 7293000, "note": ""}, {"id": "seed-2026-04-28", "date": "2026-04-28", "thu_tm": 2800000, "thu_ck": 140000, "chi_tm": 1235000, "chi_ck": 2319000, "note": ""}, {"id": "seed-2026-04-29", "date": "2026-04-29", "thu_tm": 1300000, "thu_ck": 0, "chi_tm": 560000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-04-30", "date": "2026-04-30", "thu_tm": 2300000, "thu_ck": 540000, "chi_tm": 2170000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-01", "date": "2026-05-01", "thu_tm": 3450000, "thu_ck": 323000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-02", "date": "2026-05-02", "thu_tm": 1300000, "thu_ck": 250000, "chi_tm": 0, "chi_ck": 0, "note": "Thứ 7"}, {"id": "seed-2026-05-03", "date": "2026-05-03", "thu_tm": 2350000, "thu_ck": 807000, "chi_tm": 3890000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-04", "date": "2026-05-04", "thu_tm": 4600000, "thu_ck": 134000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-05", "date": "2026-05-05", "thu_tm": 2550000, "thu_ck": 230000, "chi_tm": 1054000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-06", "date": "2026-05-06", "thu_tm": 1500000, "thu_ck": 830000, "chi_tm": 2320000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-07", "date": "2026-05-07", "thu_tm": 1200000, "thu_ck": 1200000, "chi_tm": 0, "chi_ck": 3179000, "note": ""}, {"id": "seed-2026-05-08", "date": "2026-05-08", "thu_tm": 5250000, "thu_ck": 1860000, "chi_tm": 6642000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-09", "date": "2026-05-09", "thu_tm": 1900000, "thu_ck": 500000, "chi_tm": 5850000, "chi_ck": 0, "note": "Thứ 7"}, {"id": "seed-2026-05-10", "date": "2026-05-10", "thu_tm": 1150000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-05-11", "date": "2026-05-11", "thu_tm": 2800000, "thu_ck": 590000, "chi_tm": 0, "chi_ck": 1800000, "note": ""}, {"id": "seed-2026-05-12", "date": "2026-05-12", "thu_tm": 1250000, "thu_ck": 706000, "chi_tm": 750000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-13", "date": "2026-05-13", "thu_tm": 2100000, "thu_ck": 1060000, "chi_tm": 0, "chi_ck": 350000, "note": ""}, {"id": "seed-2026-05-14", "date": "2026-05-14", "thu_tm": 1700000, "thu_ck": 726000, "chi_tm": 1897000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-15", "date": "2026-05-15", "thu_tm": 3000000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 1344000, "note": ""}, {"id": "seed-2026-05-16", "date": "2026-05-16", "thu_tm": 2750000, "thu_ck": 387000, "chi_tm": 1470000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-17", "date": "2026-05-17", "thu_tm": 2300000, "thu_ck": 0, "chi_tm": 5165000, "chi_ck": 685000, "note": ""}, {"id": "seed-2026-05-18", "date": "2026-05-18", "thu_tm": 680000, "thu_ck": 324000, "chi_tm": 2201000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-19", "date": "2026-05-19", "thu_tm": 1750000, "thu_ck": 0, "chi_tm": 3226000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-20", "date": "2026-05-20", "thu_tm": 1800000, "thu_ck": 83000, "chi_tm": 760000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-21", "date": "2026-05-21", "thu_tm": 1300000, "thu_ck": 1411000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-22", "date": "2026-05-22", "thu_tm": 2200000, "thu_ck": 253000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-23", "date": "2026-05-23", "thu_tm": 1060000, "thu_ck": 740000, "chi_tm": 4284000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-24", "date": "2026-05-24", "thu_tm": 1000000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 1365000, "note": ""}, {"id": "seed-2026-05-25", "date": "2026-05-25", "thu_tm": 1150000, "thu_ck": 293000, "chi_tm": 510000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-26", "date": "2026-05-26", "thu_tm": 2620000, "thu_ck": 94000, "chi_tm": 2190000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-27", "date": "2026-05-27", "thu_tm": 2300000, "thu_ck": 664000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-28", "date": "2026-05-28", "thu_tm": 1300000, "thu_ck": 159000, "chi_tm": 100000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-29", "date": "2026-05-29", "thu_tm": 950000, "thu_ck": 970000, "chi_tm": 3360000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-30", "date": "2026-05-30", "thu_tm": 2600000, "thu_ck": 320000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-05-31", "date": "2026-05-31", "thu_tm": 2700000, "thu_ck": 28000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-01", "date": "2026-06-01", "thu_tm": 1600000, "thu_ck": 757000, "chi_tm": 2420000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-02", "date": "2026-06-02", "thu_tm": 1950000, "thu_ck": 960000, "chi_tm": 3000000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-03", "date": "2026-06-03", "thu_tm": 510000, "thu_ck": 193000, "chi_tm": 1466000, "chi_ck": 0, "note": "Chiều OFF"}, {"id": "seed-2026-06-04", "date": "2026-06-04", "thu_tm": 5800000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-05", "date": "2026-06-05", "thu_tm": 2100000, "thu_ck": 877000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-06", "date": "2026-06-06", "thu_tm": 3200000, "thu_ck": 1730000, "chi_tm": 5929000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-07", "date": "2026-06-07", "thu_tm": 1500000, "thu_ck": 327000, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-06-08", "date": "2026-06-08", "thu_tm": 4500000, "thu_ck": 40000, "chi_tm": 3430000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-09", "date": "2026-06-09", "thu_tm": 2050000, "thu_ck": 1085000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-10", "date": "2026-06-10", "thu_tm": 0, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": "OFF (5 ngày)"}, {"id": "seed-2026-06-15", "date": "2026-06-15", "thu_tm": 2250000, "thu_ck": 219000, "chi_tm": 3545000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-16", "date": "2026-06-16", "thu_tm": 4250000, "thu_ck": 450000, "chi_tm": 1140000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-17", "date": "2026-06-17", "thu_tm": 1400000, "thu_ck": 69000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-18", "date": "2026-06-18", "thu_tm": 1300000, "thu_ck": 311000, "chi_tm": 3467000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-19", "date": "2026-06-19", "thu_tm": 1200000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-20", "date": "2026-06-20", "thu_tm": 2450000, "thu_ck": 110000, "chi_tm": 4596000, "chi_ck": 0, "note": "Thứ 7"}, {"id": "seed-2026-06-21", "date": "2026-06-21", "thu_tm": 1800000, "thu_ck": 270000, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-06-22", "date": "2026-06-22", "thu_tm": 2450000, "thu_ck": 770000, "chi_tm": 4623000, "chi_ck": 2620000, "note": ""}, {"id": "seed-2026-06-23", "date": "2026-06-23", "thu_tm": 2750000, "thu_ck": 462000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-24", "date": "2026-06-24", "thu_tm": 1350000, "thu_ck": 742000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-25", "date": "2026-06-25", "thu_tm": 2600000, "thu_ck": 468000, "chi_tm": 2907000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-26", "date": "2026-06-26", "thu_tm": 2400000, "thu_ck": 1190000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-27", "date": "2026-06-27", "thu_tm": 3300000, "thu_ck": 17000, "chi_tm": 3425000, "chi_ck": 0, "note": "Thứ 7"}, {"id": "seed-2026-06-28", "date": "2026-06-28", "thu_tm": 900000, "thu_ck": 920000, "chi_tm": 4000000, "chi_ck": 356000, "note": "Chủ nhật"}, {"id": "seed-2026-06-29", "date": "2026-06-29", "thu_tm": 4000000, "thu_ck": 1354000, "chi_tm": 180000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-06-30", "date": "2026-06-30", "thu_tm": 1700000, "thu_ck": 220000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-01", "date": "2026-07-01", "thu_tm": 1700000, "thu_ck": 194000, "chi_tm": 3086000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-02", "date": "2026-07-02", "thu_tm": 1200000, "thu_ck": 773000, "chi_tm": 1708000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-03", "date": "2026-07-03", "thu_tm": 2300000, "thu_ck": 150000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-04", "date": "2026-07-04", "thu_tm": 4600000, "thu_ck": 331000, "chi_tm": 3705000, "chi_ck": 0, "note": "Thứ 7"}, {"id": "seed-2026-07-05", "date": "2026-07-05", "thu_tm": 1570000, "thu_ck": 73000, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-07-06", "date": "2026-07-06", "thu_tm": 4650000, "thu_ck": 50000, "chi_tm": 3346000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-07", "date": "2026-07-07", "thu_tm": 1000000, "thu_ck": 1830000, "chi_tm": 4297000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-08", "date": "2026-07-08", "thu_tm": 1550000, "thu_ck": 500000, "chi_tm": 5155000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-09", "date": "2026-07-09", "thu_tm": 2250000, "thu_ck": 55000, "chi_tm": 3190000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-10", "date": "2026-07-10", "thu_tm": 5750000, "thu_ck": 205000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-11", "date": "2026-07-11", "thu_tm": 3750000, "thu_ck": 888000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-12", "date": "2026-07-12", "thu_tm": 2350000, "thu_ck": 0, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-13", "date": "2026-07-13", "thu_tm": 1000000, "thu_ck": 100000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-14", "date": "2026-07-14", "thu_tm": 2800000, "thu_ck": 75000, "chi_tm": 3270000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-15", "date": "2026-07-15", "thu_tm": 3800000, "thu_ck": 57000, "chi_tm": 1290000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-16", "date": "2026-07-16", "thu_tm": 1250000, "thu_ck": 40000, "chi_tm": 1659000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-17", "date": "2026-07-17", "thu_tm": 3850000, "thu_ck": 1312000, "chi_tm": 3861000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-18", "date": "2026-07-18", "thu_tm": 1600000, "thu_ck": 1623000, "chi_tm": 5591000, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-07-19", "date": "2026-07-19", "thu_tm": 700000, "thu_ck": 420000, "chi_tm": 0, "chi_ck": 0, "note": "Chủ nhật"}, {"id": "seed-2026-07-20", "date": "2026-07-20", "thu_tm": 1650000, "thu_ck": 977000, "chi_tm": 2982000, "chi_ck": 0, "note": "Thứ 2"}, {"id": "seed-2026-07-21", "date": "2026-07-21", "thu_tm": 2750000, "thu_ck": 0, "chi_tm": 560000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-22", "date": "2026-07-22", "thu_tm": 1400000, "thu_ck": 95000, "chi_tm": 0, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-23", "date": "2026-07-23", "thu_tm": 2600000, "thu_ck": 2688000, "chi_tm": 11799000, "chi_ck": 0, "note": ""}, {"id": "seed-2026-07-24", "date": "2026-07-24", "thu_tm": 2200000, "thu_ck": 521000, "chi_tm": 773000, "chi_ck": 2640000, "note": ""}];
+
+const $=(id)=>document.getElementById(id);
+let entries=[];
+let statsRange='month';
+let donutMode='thu';
+let recentRange='month';
+let filterFrom='';
+let filterTo='';
+let filterFromStats='';
+let filterToStats='';
+let transactions=[];
+let lockedDates=[];
+let entryDate='';
+let txType='thu';
+let txMethod='tm';
+
+const fmt=(n)=> (n||0).toLocaleString('vi-VN');
+const unformat=(s)=> parseInt((s||'0').replace(/\D/g,''),10)||0;
+const todayISO=()=> new Date().toISOString().slice(0,10);
+const dLabel=(iso)=>{ const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}); };
+const ddmmyyyy=(iso)=>{ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; };
+
+// Shared filter logic used by both "Gần đây" and "Thống kê".
+// A custom từ/đến ngày range always overrides the pill selection when set.
+function filterByMode(mode, customFrom, customTo){
+  if(customFrom || customTo){
+    return entries.filter(e=> (!customFrom || e.date>=customFrom) && (!customTo || e.date<=customTo));
+  }
+  const now=new Date();
+  if(mode==='7' || mode==='30'){
+    const days=parseInt(mode,10);
+    const cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-(days-1));
+    const cutoffISO=cutoff.toISOString().slice(0,10);
+    return entries.filter(e=>e.date>=cutoffISO);
+  }
+  if(mode==='month'){
+    const ym=now.toISOString().slice(0,7);
+    return entries.filter(e=>e.date.slice(0,7)===ym);
+  }
+  if(mode==='year'){
+    const y=String(now.getFullYear());
+    return entries.filter(e=>e.date.slice(0,4)===y);
+  }
+  return entries.slice();
+}
+
+function attachThousandFormat(input){
+  input.addEventListener('input',()=>{
+    const raw=unformat(input.value);
+    input.value = raw? fmt(raw):'';
+  });
+}
+attachThousandFormat($('txAmount'));
+
+$('fDate').addEventListener('change',()=>{
+  entryDate = $('fDate').value || todayISO();
+  $('fDateDisplay').textContent = ddmmyyyy(entryDate);
+  renderEntryTab();
+});
+
+// Gần đây: custom date range
+$('fFrom').addEventListener('change',()=>{
+  filterFrom = $('fFrom').value;
+  $('fFromDisplay').textContent = filterFrom? ddmmyyyy(filterFrom) : '—';
+  render();
+});
+$('fTo').addEventListener('change',()=>{
+  filterTo = $('fTo').value;
+  $('fToDisplay').textContent = filterTo? ddmmyyyy(filterTo) : '—';
+  render();
+});
+$('clearFilterBtn').addEventListener('click',()=>{
+  filterFrom=''; filterTo='';
+  $('fFrom').value=''; $('fTo').value='';
+  $('fFromDisplay').textContent='—'; $('fToDisplay').textContent='—';
+  render();
+});
+document.querySelectorAll('#recentPills .pill').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#recentPills .pill').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    recentRange=btn.dataset.r;
+    render();
+  });
+});
+
+// Thống kê: custom date range
+$('fFromStats').addEventListener('change',()=>{
+  filterFromStats = $('fFromStats').value;
+  $('fFromStatsDisplay').textContent = filterFromStats? ddmmyyyy(filterFromStats) : '—';
+  renderStats();
+});
+$('fToStats').addEventListener('change',()=>{
+  filterToStats = $('fToStats').value;
+  $('fToStatsDisplay').textContent = filterToStats? ddmmyyyy(filterToStats) : '—';
+  renderStats();
+});
+$('clearFilterStatsBtn').addEventListener('click',()=>{
+  filterFromStats=''; filterToStats='';
+  $('fFromStats').value=''; $('fToStats').value='';
+  $('fFromStatsDisplay').textContent='—'; $('fToStatsDisplay').textContent='—';
+  renderStats();
+});
+
+const CHI_MERGE_DATA = [];
+const MERGE_DATA = [];
+
+let fbApp=null, fbAuth=null, fbDb=null, fbDocRef=null, fbReady=false, fbSuppressNextSnapshot=false;
+
+async function initFirebase(){
+  try{
+    fbApp = firebase.initializeApp(firebaseConfig);
+    fbAuth = firebase.auth();
+    fbDb = firebase.firestore();
+    fbDocRef = fbDb.collection('sothuchi').doc('main');
+    await fbAuth.signInAnonymously();
+    fbReady = true;
+  }catch(e){
+    fbReady = false;
+    setStorageWarning(true);
+  }
+}
+
+async function persistAll(){
+  if(!fbReady){ setStorageWarning(true); return; }
+  try{
+    fbSuppressNextSnapshot = true;
+    await fbDocRef.set({
+      entries: entries,
+      transactions: transactions,
+      lockedDates: lockedDates,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setStorageWarning(false);
+  }catch(e){
+    setStorageWarning(true);
+  }
+}
+// All three used to be separate storage keys; now they live in one Firestore
+// document, so every save just writes the full current state.
+async function persist(){ await persistAll(); }
+async function persistTransactions(){ await persistAll(); }
+async function persistLockedDates(){ await persistAll(); }
+
+function setStorageWarning(show){
+  const el = $('storageWarning');
+  if(el) el.style.display = show? 'block':'none';
+}
+
+async function loadEntries(){
+  await initFirebase();
+  if(!fbReady){
+    // Can't reach Firebase (offline / misconfigured) — fall back to whatever
+    // was already in memory so the app doesn't crash, and keep the warning visible.
+    render();
+    return;
+  }
+
+  fbDocRef.onSnapshot((doc)=>{
+    if(fbSuppressNextSnapshot){
+      // This snapshot is just an echo of our own write; state is already correct.
+      fbSuppressNextSnapshot = false;
+      return;
+    }
+    if(doc.exists){
+      const data = doc.data();
+      entries = data.entries || [];
+      transactions = data.transactions || [];
+      lockedDates = data.lockedDates || [];
+      render();
+    }else{
+      seedFirstRun();
+    }
+  }, (err)=>{
+    setStorageWarning(true);
+  });
+}
+
+async function seedFirstRun(){
+  entries = SEED_DATA.slice();
+  transactions = [];
+  lockedDates = [...new Set(entries.map(e=>e.date))];
+  await persistAll();
+  render();
+}
+
+function isLocked(date){
+  return lockedDates.includes(date);
+}
+
+function dayTransactions(date){
+  return transactions.filter(t=>t.date===date);
+}
+
+function computeTotals(list){
+  let thu_tm=0, thu_ck=0, chi_tm=0, chi_ck=0;
+  list.forEach(t=>{
+    if(t.type==='thu'){ if(t.method==='tm') thu_tm+=t.amount; else thu_ck+=t.amount; }
+    else { if(t.method==='tm') chi_tm+=t.amount; else chi_ck+=t.amount; }
+  });
+  return {thu_tm, thu_ck, chi_tm, chi_ck};
+}
+
+function addTransaction(){
+  const amount = unformat($('txAmount').value);
+  if(!amount){ alert('Bạn chưa nhập số tiền.'); return; }
+  const note = $('txNote').value.trim();
+  transactions.push({
+    id: 'tx-'+Date.now()+Math.random().toString(16).slice(2),
+    date: entryDate, type: txType, method: txMethod, amount, note
+  });
+  persistTransactions();
+  $('txAmount').value=''; $('txNote').value='';
+  renderEntryTab();
+}
+
+function deleteTransaction(id){
+  transactions = transactions.filter(t=>t.id!==id);
+  persistTransactions();
+  renderEntryTab();
+}
+
+function upsertEntryForDate(date, totals){
+  const idx = entries.findIndex(e=>e.date===date);
+  if(idx>-1){
+    entries[idx] = {...entries[idx], thu_tm:totals.thu_tm, thu_ck:totals.thu_ck, chi_tm:totals.chi_tm, chi_ck:totals.chi_ck};
+  }else{
+    entries.push({id:'entry-'+date, date, thu_tm:totals.thu_tm, thu_ck:totals.thu_ck, chi_tm:totals.chi_tm, chi_ck:totals.chi_ck, note:''});
+  }
+}
+
+function finalizeDay(){
+  const list = dayTransactions(entryDate);
+  if(list.length===0){
+    alert('Chưa có khoản nào để chốt.');
+    return;
+  }
+  $('modalRoot').innerHTML = `
+    <div class="modal-bg">
+      <div class="modal">
+        <h3>Chốt số liệu ngày ${ddmmyyyy(entryDate)}?</h3>
+        <p class="hint">Sau khi chốt, ngày này sẽ bị khoá — cần bấm "Mở lại" mới sửa/thêm khoản được.</p>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="cancelFinalize">Huỷ</button>
+          <button class="btn btn-primary" id="okFinalize">Chốt số liệu</button>
+        </div>
+      </div>
+    </div>`;
+  $('cancelFinalize').onclick = ()=> $('modalRoot').innerHTML='';
+  $('okFinalize').onclick = async ()=>{
+    const totals = computeTotals(list);
+    upsertEntryForDate(entryDate, totals);
+    if(!lockedDates.includes(entryDate)) lockedDates.push(entryDate);
+    await persist();
+    await persistLockedDates();
+    $('modalRoot').innerHTML='';
+    render();
+  };
+}
+
+function unlockDay(){
+  $('modalRoot').innerHTML = `
+    <div class="modal-bg">
+      <div class="modal">
+        <h3>Mở lại ngày ${ddmmyyyy(entryDate)}?</h3>
+        <p class="hint">Bạn sẽ thêm/sửa/xoá được từng khoản của ngày này. Nhớ bấm "Chốt số liệu ngày" lại sau khi sửa xong.</p>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="cancelUnlock">Huỷ</button>
+          <button class="btn btn-primary" id="okUnlock">Mở lại</button>
+        </div>
+      </div>
+    </div>`;
+  $('cancelUnlock').onclick = ()=> $('modalRoot').innerHTML='';
+  $('okUnlock').onclick = async ()=>{
+    lockedDates = lockedDates.filter(d=>d!==entryDate);
+    // If this day has no itemized transactions yet (historical/imported data),
+    // seed them from the existing totals first so nothing gets lost.
+    if(dayTransactions(entryDate).length===0){
+      const entry = entries.find(e=>e.date===entryDate);
+      if(entry){
+        const seeds=[];
+        if(entry.thu_tm) seeds.push({id:'seedtx-'+entryDate+'-thutm', date:entryDate, type:'thu', method:'tm', amount:entry.thu_tm, note:'Số liệu gốc'});
+        if(entry.thu_ck) seeds.push({id:'seedtx-'+entryDate+'-thuck', date:entryDate, type:'thu', method:'ck', amount:entry.thu_ck, note:'Số liệu gốc'});
+        if(entry.chi_tm) seeds.push({id:'seedtx-'+entryDate+'-chitm', date:entryDate, type:'chi', method:'tm', amount:entry.chi_tm, note:'Số liệu gốc'});
+        if(entry.chi_ck) seeds.push({id:'seedtx-'+entryDate+'-chick', date:entryDate, type:'chi', method:'ck', amount:entry.chi_ck, note:'Số liệu gốc'});
+        transactions = transactions.concat(seeds);
+        await persistTransactions();
+      }
+    }
+    await persistLockedDates();
+    $('modalRoot').innerHTML='';
+    render();
+  };
+}
+
+function renderEntryTab(){
+  if(!entryDate) return;
+  const locked = isLocked(entryDate);
+  $('lockedView').style.display = locked? 'block':'none';
+  $('unlockedView').style.display = locked? 'none':'block';
+
+  if(locked){
+    const entry = entries.find(e=>e.date===entryDate) || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0};
+    const thu = entry.thu_tm+entry.thu_ck, chi = entry.chi_tm+entry.chi_ck;
+    $('lockedThu').textContent=fmt(thu);
+    $('lockedChi').textContent=fmt(chi);
+    $('lockedLai').textContent=fmt(thu-chi);
+  }else{
+    const list = dayTransactions(entryDate).sort((a,b)=> b.id.localeCompare(a.id));
+    const txListEl = $('txList');
+    if(list.length===0){
+      txListEl.innerHTML = '<div class="empty">Chưa có khoản nào cho ngày này.</div>';
+    }else{
+      txListEl.innerHTML = list.map(t=>`
+        <div class="tx-row" data-id="${t.id}">
+          <div class="tx-main">
+            <span class="tx-badge ${t.type}">${t.type==='thu'?'Thu':'Chi'} ${t.method==='tm'?'TM':'CK'}</span>
+            <span class="tx-amt">${fmt(t.amount)}</span>
+            <span class="tx-note">${t.note||''}</span>
+          </div>
+          <button class="tx-del" data-del="${t.id}">✕</button>
+        </div>`).join('');
+      txListEl.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.addEventListener('click',()=>deleteTransaction(btn.dataset.del));
+      });
+    }
+    const totals = computeTotals(list);
+    $('liveThu').textContent = fmt(totals.thu_tm+totals.thu_ck);
+    $('liveChi').textContent = fmt(totals.chi_tm+totals.chi_ck);
+    $('liveLai').textContent = fmt((totals.thu_tm+totals.thu_ck)-(totals.chi_tm+totals.chi_ck));
+  }
+}
+
+function goToEntryDate(date){
+  entryDate = date;
+  $('fDate').value = date;
+  $('fDateDisplay').textContent = ddmmyyyy(date);
+  $('tabEntryBtn').click();
+  renderEntryTab();
+  $('tabEntry').scrollIntoView({behavior:'smooth'});
+}
+
+function render(){
+  const today=todayISO();
+  $('todayLabel').textContent = new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
+
+  const currentYm = today.slice(0,7);
+  const thisMonth = entries.filter(e=>e.date.slice(0,7)===currentYm);
+  const tThu = thisMonth.reduce((s,e)=>s+e.thu_tm+e.thu_ck,0);
+  const tChi = thisMonth.reduce((s,e)=>s+e.chi_tm+e.chi_ck,0);
+  $('tdThu').textContent=fmt(tThu);
+  $('tdChi').textContent=fmt(tChi);
+  $('tdLai').textContent=fmt(tThu-tChi);
+
+  const filteredEntries = filterByMode(recentRange, filterFrom, filterTo);
+  const listData=[...filteredEntries].sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const listEl=$('recentList');
+  if(listData.length===0){
+    listEl.innerHTML = '<div class="empty">Không có mục nào trong khoảng đã chọn.</div>';
+  }else{
+    listEl.innerHTML = listData.map(e=>{
+      const thu=e.thu_tm+e.thu_ck, chi=e.chi_tm+e.chi_ck, lai=thu-chi;
+      const laiClass = lai>0? 'pos' : (lai<0? 'neg' : '');
+      return `<div class="entry" data-date="${e.date}">
+        <div class="d">${ddmmyyyy(e.date)}</div>
+        <div class="col thu">${thu? fmt(thu):'—'}</div>
+        <div class="col chi">${chi? fmt(chi):'—'}</div>
+        <div class="col lai ${laiClass}">${fmt(lai)}</div>
+      </div>`;
+    }).join('');
+    listEl.querySelectorAll('.entry').forEach(el=>{
+      el.addEventListener('click',()=>goToEntryDate(el.dataset.date));
+    });
+  }
+  renderEntryTab();
+}
+
+function filteredForRange(){
+  if(entries.length===0) return [];
+  return filterByMode(statsRange, filterFromStats, filterToStats);
+}
+
+function fmtShort(n){
+  if(!n) return '0';
+  if(n>=1000000){ const v=n/1000000; return (Math.round(v*10)/10)+'tr'; }
+  if(n>=1000){ const v=n/1000; return (Math.round(v*10)/10)+'k'; }
+  return String(n);
+}
+
+function buildLineChartSVG(labels, thuArr, chiArr){
+  const n=labels.length;
+  const gap=58;
+  const padL=10, padR=10, padTop=26, padBottom=22, plotH=118;
+  const width=Math.max(280, n*gap+padL+padR);
+  const height=padTop+plotH+padBottom;
+  const maxV=Math.max(1, ...thuArr, ...chiArr);
+  const x=(i)=> padL + gap/2 + i*gap;
+  const y=(v)=> padTop + plotH - (v/maxV)*plotH;
+
+  const thuPts = thuArr.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  const chiPts = chiArr.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+
+  let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" font-family="Space Mono, monospace">`;
+  svg += `<polyline points="${thuPts}" fill="none" stroke="#3f6b4a" stroke-width="2"/>`;
+  svg += `<polyline points="${chiPts}" fill="none" stroke="#a63d2f" stroke-width="2"/>`;
+
+  for(let i=0;i<n;i++){
+    const xi=x(i);
+    const yThu=y(thuArr[i]), yChi=y(chiArr[i]);
+    svg += `<circle cx="${xi}" cy="${yThu}" r="3" fill="#3f6b4a"/>`;
+    svg += `<circle cx="${xi}" cy="${yChi}" r="3" fill="#a63d2f"/>`;
+    if(thuArr[i]>0) svg += `<text x="${xi}" y="${yThu-7}" font-size="9.5" fill="#3f6b4a" text-anchor="middle">${fmtShort(thuArr[i])}</text>`;
+    if(chiArr[i]>0) svg += `<text x="${xi}" y="${yChi+15}" font-size="9.5" fill="#a63d2f" text-anchor="middle">${fmtShort(chiArr[i])}</text>`;
+    svg += `<text x="${xi}" y="${height-6}" font-size="9.5" fill="#4b5a55" text-anchor="middle">${labels[i]}</text>`;
+  }
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderStats(){
+  const data=filteredForRange();
+  const sThu=data.reduce((s,e)=>s+e.thu_tm+e.thu_ck,0);
+  const sChi=data.reduce((s,e)=>s+e.chi_tm+e.chi_ck,0);
+  $('sThu').textContent=fmt(sThu);
+  $('sChi').textContent=fmt(sChi);
+  $('sLai').textContent=fmt(sThu-sChi);
+
+  let keys=[], labels=[], thuArr=[], chiArr=[];
+  const hasCustomStats = !!(filterFromStats || filterToStats);
+  let useMonthly;
+  if(hasCustomStats){
+    if(data.length>0){
+      const dates=data.map(e=>e.date);
+      const minD=dates.reduce((m,d)=> d<m? d:m, dates[0]);
+      const maxD=dates.reduce((m,d)=> d>m? d:m, dates[0]);
+      const spanDays=(new Date(maxD)-new Date(minD))/86400000;
+      useMonthly = spanDays>60;
+    }else{ useMonthly=false; }
+  }else{
+    useMonthly = (statsRange==='all' || statsRange==='year');
+  }
+
+  if(useMonthly){
+    const byMonth={};
+    data.forEach(e=>{
+      const k=e.date.slice(0,7);
+      byMonth[k]=byMonth[k]||{thu:0,chi:0};
+      byMonth[k].thu+=e.thu_tm+e.thu_ck;
+      byMonth[k].chi+=e.chi_tm+e.chi_ck;
+    });
+    keys=Object.keys(byMonth).sort();
+    labels=keys.map(k=>'T'+k.slice(5,7));
+    thuArr=keys.map(k=>byMonth[k].thu);
+    chiArr=keys.map(k=>byMonth[k].chi);
+  }else{
+    const byDay={};
+    data.forEach(e=>{
+      byDay[e.date]=byDay[e.date]||{thu:0,chi:0};
+      byDay[e.date].thu+=e.thu_tm+e.thu_ck;
+      byDay[e.date].chi+=e.chi_tm+e.chi_ck;
+    });
+    keys=Object.keys(byDay).sort();
+    labels=keys.map(dLabel);
+    thuArr=keys.map(k=>byDay[k].thu);
+    chiArr=keys.map(k=>byDay[k].chi);
+  }
+
+  const barsWrap=$('barsWrap');
+  if(keys.length===0){
+    barsWrap.innerHTML='<div class="empty">Chưa có dữ liệu trong khoảng này</div>';
+  }else{
+    barsWrap.innerHTML = buildLineChartSVG(labels, thuArr, chiArr);
+    barsWrap.scrollLeft = barsWrap.scrollWidth;
+  }
+
+  const tm = donutMode==='thu'? data.reduce((s,e)=>s+e.thu_tm,0) : data.reduce((s,e)=>s+e.chi_tm,0);
+  const ck = donutMode==='thu'? data.reduce((s,e)=>s+e.thu_ck,0) : data.reduce((s,e)=>s+e.chi_ck,0);
+  const total = tm+ck;
+  const pctTm = total? Math.round((tm/total)*100) : 0;
+  const deg = total? (tm/total)*360 : 0;
+  $('donutEl').style.background = total
+    ? `conic-gradient(var(--gold) 0deg ${deg}deg, var(--ink) ${deg}deg 360deg)`
+    : `var(--paper-line)`;
+  $('donutPct').textContent = total? pctTm+'%' : '—';
+  $('donutTmVal').textContent = fmt(tm);
+  $('donutCkVal').textContent = fmt(ck);
+}
+
+function parseDateFlexible(s){
+  s = (s||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m){
+    const [_, d, mo, y] = m;
+    return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  return null;
+}
+
+function parseCSV(text){
+  const lines = text.trim().split(/\r?\n/).filter(l=>l.trim().length>0);
+  const rows = [];
+  for(const line of lines){
+    // simple CSV split that respects "quoted,fields"
+    const cells = [];
+    let cur='', inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch === '"'){
+        if(inQ && line[i+1] === '"'){ cur+='"'; i++; }
+        else inQ = !inQ;
+      }else if(ch === ',' && !inQ){
+        cells.push(cur); cur='';
+      }else{
+        cur += ch;
+      }
+    }
+    cells.push(cur);
+    rows.push(cells.map(c=>c.trim()));
+  }
+  return rows;
+}
+
+async function importData(){
+  const raw = $('importText').value;
+  const resultEl = $('importResult');
+  if(!raw.trim()){
+    resultEl.textContent = 'Chưa dán dữ liệu nào.';
+    return;
+  }
+  const rows = parseCSV(raw);
+  let updated=0, added=0, skipped=0;
+  const byDate = {};
+  entries.forEach(e=>{ byDate[e.date]=e; });
+
+  rows.forEach(cols=>{
+    if(cols.length < 2) { skipped++; return; }
+    const dateISO = parseDateFlexible(cols[0]);
+    if(!dateISO){ skipped++; return; } // likely a header row or bad date, skip quietly
+    const thu_tm = unformat(cols[1]||'0');
+    const thu_ck = unformat(cols[2]||'0');
+    const chi_tm = unformat(cols[3]||'0');
+    const chi_ck = unformat(cols[4]||'0');
+    const note = cols[5] || '';
+
+    const existing = byDate[dateISO];
+    if(existing){
+      existing.thu_tm = thu_tm;
+      existing.thu_ck = thu_ck;
+      existing.chi_tm = chi_tm;
+      existing.chi_ck = chi_ck;
+      existing.note = note;
+      updated++;
+    }else{
+      const newE = {id:'import-'+dateISO+'-'+Date.now(), date:dateISO, thu_tm, thu_ck, chi_tm, chi_ck, note};
+      entries.push(newE);
+      byDate[dateISO] = newE;
+      added++;
+    }
+  });
+
+  await persist();
+  render();
+  resultEl.textContent = `Đã cập nhật ${updated} ngày, thêm mới ${added} ngày${skipped? `, bỏ qua ${skipped} dòng không đọc được`:''}.`;
+  $('importText').value='';
+}
+
+function buildCSV(){
+  const rows=[['Ngày','Thu tiền mặt','Thu chuyển khoản','Chi tiền mặt','Chi chuyển khoản','Ghi chú']];
+  [...entries].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    rows.push([e.date,e.thu_tm,e.thu_ck,e.chi_tm,e.chi_ck,(e.note||'').replace(/\n/g,' ')]);
+  });
+  return rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+}
+
+function exportCSV(){
+  const csv=buildCSV();
+  let downloadWorked=false;
+  try{
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='so-thu-chi.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    downloadWorked=true;
+  }catch(e){ downloadWorked=false; }
+  // Always show a fallback view too — downloads are unreliable inside the artifact's
+  // mobile webview, so this guarantees the person can still get their data out.
+  showCSVModal(csv, downloadWorked);
+}
+
+function showCSVModal(csv, downloadAttempted){
+  $('modalRoot').innerHTML = `
+    <div class="modal-bg" id="csvBg">
+      <div class="modal">
+        <h3>Dữ liệu CSV</h3>
+        <p class="hint">${downloadAttempted? 'Nếu file không tự tải xuống, ':''}Bạn có thể bôi đen (hoặc bấm "Sao chép") toàn bộ nội dung bên dưới rồi dán vào Zalo, Notes hoặc Email để lưu lại.</p>
+        <textarea id="csvText" readonly style="width:100%;height:160px;font-family:'Space Mono',monospace;font-size:11px;padding:8px;border-radius:8px;border:1.5px solid var(--paper-line);background:#fffef9;">${csv.replace(/</g,'&lt;')}</textarea>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn btn-ghost" id="closeCsv">Đóng</button>
+          <button class="btn btn-primary" id="copyCsv">Sao chép</button>
+        </div>
+      </div>
+    </div>`;
+  $('closeCsv').onclick=()=> $('modalRoot').innerHTML='';
+  $('copyCsv').onclick=()=>{
+    const ta=$('csvText');
+    ta.focus(); ta.select(); ta.setSelectionRange(0,999999);
+    let copied=false;
+    try{ copied=document.execCommand('copy'); }catch(e){ copied=false; }
+    if(copied){
+      $('copyCsv').textContent='Đã sao chép ✓';
+      setTimeout(()=>{ if($('copyCsv')) $('copyCsv').textContent='Sao chép'; }, 1800);
+    }else if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(csv).then(()=>{
+        $('copyCsv').textContent='Đã sao chép ✓';
+        setTimeout(()=>{ if($('copyCsv')) $('copyCsv').textContent='Sao chép'; }, 1800);
+      }).catch(()=>{
+        alert('Không tự sao chép được — vui lòng bôi đen nội dung và copy thủ công.');
+      });
+    }else{
+      alert('Không tự sao chép được — vui lòng bôi đen nội dung và copy thủ công.');
+    }
+  };
+}
+
+$('tabEntryBtn').addEventListener('click',()=>{
+  $('tabEntryBtn').classList.add('active'); $('tabStatsBtn').classList.remove('active');
+  $('tabEntry').style.display='block'; $('tabStats').style.display='none';
+});
+$('tabStatsBtn').addEventListener('click',()=>{
+  $('tabStatsBtn').classList.add('active'); $('tabEntryBtn').classList.remove('active');
+  $('tabStats').style.display='block'; $('tabEntry').style.display='none';
+  renderStats();
+});
+
+document.querySelectorAll('#rangePills .pill').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#rangePills .pill').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    statsRange=btn.dataset.r;
+    renderStats();
+  });
+});
+$('donutThuBtn').addEventListener('click',()=>{
+  donutMode='thu'; $('donutThuBtn').classList.add('active'); $('donutChiBtn').classList.remove('active'); renderStats();
+});
+$('donutChiBtn').addEventListener('click',()=>{
+  donutMode='chi'; $('donutChiBtn').classList.add('active'); $('donutThuBtn').classList.remove('active'); renderStats();
+});
+$('exportBtn').addEventListener('click',exportCSV);
+$('importBtn').addEventListener('click',importData);
+
+$('addTxBtn').addEventListener('click', addTransaction);
+$('finalizeBtn').addEventListener('click', finalizeDay);
+$('unlockBtn').addEventListener('click', unlockDay);
+document.querySelectorAll('#comboToggle .combo-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#comboToggle .combo-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    txType = btn.dataset.type;
+    txMethod = btn.dataset.method;
+  });
+});
+
+entryDate = todayISO();
+$('fDate').value = entryDate;
+$('fDateDisplay').textContent = ddmmyyyy(entryDate);
+
+loadEntries();
+</script>
+</body>
+</html>
