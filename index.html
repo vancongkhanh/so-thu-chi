@@ -135,6 +135,21 @@
   }
   .entry-head span:not(:first-child){text-align:right;}
   .empty{text-align:center;color:var(--ink-soft);font-size:13px;padding:20px 0;}
+
+  .wd-row{
+    display:grid;grid-template-columns:74px 1fr 1fr 30px;gap:4px;align-items:center;
+    padding:9px 2px;border-bottom:1px dashed var(--paper-line);
+  }
+  .wd-row:last-child{border-bottom:none;}
+  .wd-row .d{font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .wd-row .col{font-family:'Space Mono',monospace;font-size:12px;text-align:right;color:var(--gold);}
+  .wd-row .wd-del{background:none;border:none;color:var(--red);font-size:15px;padding:2px 4px;}
+  .wd-head{
+    display:grid;grid-template-columns:74px 1fr 1fr 30px;gap:4px;
+    font-size:10.5px;color:var(--ink-soft);font-weight:700;
+    text-transform:uppercase;letter-spacing:.03em;padding:0 2px 8px;border-bottom:1px solid var(--paper-line);margin-bottom:2px;
+  }
+  .wd-head span:not(:first-child){text-align:right;}
   #recentList{max-height:420px;overflow-y:auto;}
 
   .pills{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
@@ -228,6 +243,7 @@
 
   <div class="tabs">
     <button id="tabEntryBtn" class="active">Nhập liệu</button>
+    <button id="tabTrichBtn">Trích quỹ</button>
     <button id="tabStatsBtn">Thống kê</button>
   </div>
 
@@ -335,6 +351,59 @@
     </div>
   </div>
 
+  <div id="tabTrich" style="display:none;">
+    <div class="card">
+      <h2>Trích quỹ</h2>
+      <div class="field">
+        <label>Ngày</label>
+        <div class="date-field">
+          <div class="date-display"><span id="wdDateDisplay">—</span><span class="cal">📅</span></div>
+          <input type="date" id="wdDate">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Trích tiền mặt</label>
+          <input type="text" inputmode="numeric" id="wdTm" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Trích chuyển khoản</label>
+          <input type="text" inputmode="numeric" id="wdCk" placeholder="0">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="addWdBtn">+ Thêm trích quỹ</button>
+    </div>
+
+    <div class="card">
+      <h2>Lịch sử trích quỹ</h2>
+      <div class="pills" id="wdPills">
+        <button class="pill active" data-r="month">Tháng này</button>
+        <button class="pill" data-r="7">7 ngày</button>
+        <button class="pill" data-r="30">30 ngày</button>
+        <button class="pill" data-r="year">Năm nay</button>
+      </div>
+      <div class="row2" style="margin-bottom:10px;">
+        <div class="field" style="margin-bottom:0;">
+          <label>Từ ngày</label>
+          <div class="date-field">
+            <div class="date-display"><span id="wdFromDisplay">—</span><span class="cal">📅</span></div>
+            <input type="date" id="wdFrom">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Đến ngày</label>
+          <div class="date-field">
+            <div class="date-display"><span id="wdToDisplay">—</span><span class="cal">📅</span></div>
+            <input type="date" id="wdTo">
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" id="clearWdFilterBtn" style="margin-bottom:12px;">Bỏ lọc ngày tuỳ chỉnh</button>
+      <div class="wd-head"><span>Ngày</span><span>Trích TM</span><span>Trích CK</span><span></span></div>
+      <div id="wdList"><div class="empty">Chưa có dữ liệu</div></div>
+    </div>
+  </div>
+
   <div id="tabStats" style="display:none;">
     <div class="pills" id="rangePills">
       <button class="pill active" data-r="month">Tháng này</button>
@@ -409,6 +478,11 @@
             <td id="ymPrevTm">0</td>
             <td id="ymPrevCk">0</td>
           </tr>
+          <tr>
+            <td>Trích quỹ trong tháng</td>
+            <td class="chi" id="ymWdTm">0</td>
+            <td class="chi" id="ymWdCk">0</td>
+          </tr>
           <tr class="ym-strong">
             <td>Lũy kế đến hết tháng này</td>
             <td id="ymCumTm">0</td>
@@ -470,6 +544,11 @@ let lockedDates=[];
 let entryDate='';
 let txType='thu';
 let txMethod='tm';
+let withdrawals=[];
+let wdRange='month';
+let wdFilterFrom='';
+let wdFilterTo='';
+let wdDate='';
 
 const fmt=(n)=> (n||0).toLocaleString('vi-VN');
 const unformat=(s)=> parseInt((s||'0').replace(/\D/g,''),10)||0;
@@ -477,28 +556,28 @@ const todayISO=()=> new Date().toISOString().slice(0,10);
 const dLabel=(iso)=>{ const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}); };
 const ddmmyyyy=(iso)=>{ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; };
 
-// Shared filter logic used by both "Gần đây" and "Thống kê".
+// Shared filter logic used by "Gần đây", "Thống kê" and "Lịch sử trích quỹ".
 // A custom từ/đến ngày range always overrides the pill selection when set.
-function filterByMode(mode, customFrom, customTo){
+function filterByMode(dataset, mode, customFrom, customTo){
   if(customFrom || customTo){
-    return entries.filter(e=> (!customFrom || e.date>=customFrom) && (!customTo || e.date<=customTo));
+    return dataset.filter(e=> (!customFrom || e.date>=customFrom) && (!customTo || e.date<=customTo));
   }
   const now=new Date();
   if(mode==='7' || mode==='30'){
     const days=parseInt(mode,10);
     const cutoff=new Date(now); cutoff.setDate(cutoff.getDate()-(days-1));
     const cutoffISO=cutoff.toISOString().slice(0,10);
-    return entries.filter(e=>e.date>=cutoffISO);
+    return dataset.filter(e=>e.date>=cutoffISO);
   }
   if(mode==='month'){
     const ym=now.toISOString().slice(0,7);
-    return entries.filter(e=>e.date.slice(0,7)===ym);
+    return dataset.filter(e=>e.date.slice(0,7)===ym);
   }
   if(mode==='year'){
     const y=String(now.getFullYear());
-    return entries.filter(e=>e.date.slice(0,4)===y);
+    return dataset.filter(e=>e.date.slice(0,4)===y);
   }
-  return entries.slice();
+  return dataset.slice();
 }
 
 function attachThousandFormat(input){
@@ -508,6 +587,8 @@ function attachThousandFormat(input){
   });
 }
 attachThousandFormat($('txAmount'));
+attachThousandFormat($('wdTm'));
+attachThousandFormat($('wdCk'));
 
 $('fDate').addEventListener('change',()=>{
   entryDate = $('fDate').value || todayISO();
@@ -540,6 +621,37 @@ document.querySelectorAll('#recentPills .pill').forEach(btn=>{
     render();
   });
 });
+
+// Trích quỹ: ngày nhập + bộ lọc lịch sử
+$('wdDate').addEventListener('change',()=>{
+  wdDate = $('wdDate').value || todayISO();
+  $('wdDateDisplay').textContent = ddmmyyyy(wdDate);
+});
+$('wdFrom').addEventListener('change',()=>{
+  wdFilterFrom = $('wdFrom').value;
+  $('wdFromDisplay').textContent = wdFilterFrom? ddmmyyyy(wdFilterFrom) : '—';
+  renderWithdrawalsTab();
+});
+$('wdTo').addEventListener('change',()=>{
+  wdFilterTo = $('wdTo').value;
+  $('wdToDisplay').textContent = wdFilterTo? ddmmyyyy(wdFilterTo) : '—';
+  renderWithdrawalsTab();
+});
+$('clearWdFilterBtn').addEventListener('click',()=>{
+  wdFilterFrom=''; wdFilterTo='';
+  $('wdFrom').value=''; $('wdTo').value='';
+  $('wdFromDisplay').textContent='—'; $('wdToDisplay').textContent='—';
+  renderWithdrawalsTab();
+});
+document.querySelectorAll('#wdPills .pill').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#wdPills .pill').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    wdRange=btn.dataset.r;
+    renderWithdrawalsTab();
+  });
+});
+$('addWdBtn').addEventListener('click', addWithdrawal);
 
 // Thống kê: custom date range
 $('fFromStats').addEventListener('change',()=>{
@@ -586,6 +698,7 @@ async function persistAll(){
       entries: entries,
       transactions: transactions,
       lockedDates: lockedDates,
+      withdrawals: withdrawals,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     setStorageWarning(false);
@@ -650,6 +763,7 @@ async function loadEntries(){
       entries = data.entries || [];
       transactions = data.transactions || [];
       lockedDates = data.lockedDates || [];
+      withdrawals = data.withdrawals || [];
       if(mergeAdditionalData()){
         await persistAll();
       }
@@ -666,6 +780,7 @@ async function seedFirstRun(){
   entries = SEED_DATA.slice();
   transactions = [];
   lockedDates = [...new Set(entries.map(e=>e.date))];
+  withdrawals = [];
   mergeAdditionalData();
   await persistAll();
   render();
@@ -827,6 +942,41 @@ function goToEntryDate(date){
   $('tabEntry').scrollIntoView({behavior:'smooth'});
 }
 
+function addWithdrawal(){
+  const tm = unformat($('wdTm').value);
+  const ck = unformat($('wdCk').value);
+  if(!tm && !ck){ alert('Bạn chưa nhập số tiền trích quỹ.'); return; }
+  withdrawals.push({id:'wd-'+Date.now()+Math.random().toString(16).slice(2), date:wdDate, tm, ck});
+  persistAll();
+  $('wdTm').value=''; $('wdCk').value='';
+  renderWithdrawalsTab();
+}
+
+function deleteWithdrawal(id){
+  withdrawals = withdrawals.filter(w=>w.id!==id);
+  persistAll();
+  renderWithdrawalsTab();
+}
+
+function renderWithdrawalsTab(){
+  const list = [...filteredWithdrawals()].sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  const listEl = $('wdList');
+  if(list.length===0){
+    listEl.innerHTML = '<div class="empty">Không có khoản trích quỹ nào trong khoảng đã chọn.</div>';
+  }else{
+    listEl.innerHTML = list.map(w=>`
+      <div class="wd-row" data-id="${w.id}">
+        <div class="d">${ddmmyyyy(w.date)}</div>
+        <div class="col">${w.tm? fmt(w.tm):'—'}</div>
+        <div class="col">${w.ck? fmt(w.ck):'—'}</div>
+        <button class="wd-del" data-del="${w.id}">✕</button>
+      </div>`).join('');
+    listEl.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.addEventListener('click',()=>deleteWithdrawal(btn.dataset.del));
+    });
+  }
+}
+
 function render(){
   const today=todayISO();
   $('todayLabel').textContent = new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});
@@ -839,7 +989,7 @@ function render(){
   $('tdChi').textContent=fmt(tChi);
   $('tdLai').textContent=fmt(tThu-tChi);
 
-  const filteredEntries = filterByMode(recentRange, filterFrom, filterTo);
+  const filteredEntries = filterByMode(entries, recentRange, filterFrom, filterTo);
   const listData=[...filteredEntries].sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   const listEl=$('recentList');
   if(listData.length===0){
@@ -860,11 +1010,17 @@ function render(){
     });
   }
   renderEntryTab();
+  renderWithdrawalsTab();
 }
 
 function filteredForRange(){
   if(entries.length===0) return [];
-  return filterByMode(statsRange, filterFromStats, filterToStats);
+  return filterByMode(entries, statsRange, filterFromStats, filterToStats);
+}
+
+function filteredWithdrawals(){
+  if(withdrawals.length===0) return [];
+  return filterByMode(withdrawals, wdRange, wdFilterFrom, wdFilterTo);
 }
 
 function fmtShort(n){
@@ -910,11 +1066,17 @@ function getMonthlyTotals(){
   const byMonth = {};
   entries.forEach(e=>{
     const ym = e.date.slice(0,7);
-    byMonth[ym] = byMonth[ym] || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0};
+    byMonth[ym] = byMonth[ym] || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0,wd_tm:0,wd_ck:0};
     byMonth[ym].thu_tm += e.thu_tm;
     byMonth[ym].thu_ck += e.thu_ck;
     byMonth[ym].chi_tm += e.chi_tm;
     byMonth[ym].chi_ck += e.chi_ck;
+  });
+  withdrawals.forEach(w=>{
+    const ym = w.date.slice(0,7);
+    byMonth[ym] = byMonth[ym] || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0,wd_tm:0,wd_ck:0};
+    byMonth[ym].wd_tm += w.tm;
+    byMonth[ym].wd_ck += w.ck;
   });
   return byMonth;
 }
@@ -942,22 +1104,25 @@ function renderMonthlyTable(){
   const year = ym.slice(0,4);
   const monthNum = parseInt(ym.slice(5,7),10);
 
-  const cur = byMonth[ym] || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0};
+  const cur = byMonth[ym] || {thu_tm:0,thu_ck:0,chi_tm:0,chi_ck:0,wd_tm:0,wd_ck:0};
   const laiTm = cur.thu_tm - cur.chi_tm;
   const laiCk = cur.thu_ck - cur.chi_ck;
 
   // Cumulative starts from this year's opening balance (số dư mang sang từ năm
-  // trước, nếu có khai báo trong OPENING_BALANCES), rồi cộng dồn từ tháng 1
-  // đến hết tháng trước tháng đang chọn.
+  // trước, nếu có khai báo trong OPENING_BALANCES), rồi cộng dồn Lãi và trừ dồn
+  // Trích quỹ từ tháng 1 đến hết tháng trước tháng đang chọn.
   const opening = OPENING_BALANCES[year] || {tm:0, ck:0};
   let prevCumTm=opening.tm, prevCumCk=opening.ck;
   for(let m=1; m<monthNum; m++){
     const key = year+'-'+String(m).padStart(2,'0');
     const d = byMonth[key];
-    if(d){ prevCumTm += (d.thu_tm-d.chi_tm); prevCumCk += (d.thu_ck-d.chi_ck); }
+    if(d){
+      prevCumTm += (d.thu_tm-d.chi_tm) - (d.wd_tm||0);
+      prevCumCk += (d.thu_ck-d.chi_ck) - (d.wd_ck||0);
+    }
   }
-  const cumTm = prevCumTm + laiTm;
-  const cumCk = prevCumCk + laiCk;
+  const cumTm = prevCumTm + laiTm - (cur.wd_tm||0);
+  const cumCk = prevCumCk + laiCk - (cur.wd_ck||0);
 
   $('ymThuTm').textContent = fmt(cur.thu_tm);
   $('ymThuCk').textContent = fmt(cur.thu_ck);
@@ -968,6 +1133,8 @@ function renderMonthlyTable(){
   $('ymPrevLabel').textContent = monthNum===1 ? `Lũy kế đầu năm ${year}` : `Lũy kế đến hết tháng ${monthNum-1}`;
   $('ymPrevTm').textContent = fmt(prevCumTm);
   $('ymPrevCk').textContent = fmt(prevCumCk);
+  $('ymWdTm').textContent = fmt(cur.wd_tm||0);
+  $('ymWdCk').textContent = fmt(cur.wd_ck||0);
   $('ymCumTm').textContent = fmt(cumTm);
   $('ymCumCk').textContent = fmt(cumCk);
 }
@@ -1183,13 +1350,22 @@ function showCSVModal(csv, downloadAttempted){
   };
 }
 
-$('tabEntryBtn').addEventListener('click',()=>{
-  $('tabEntryBtn').classList.add('active'); $('tabStatsBtn').classList.remove('active');
-  $('tabEntry').style.display='block'; $('tabStats').style.display='none';
+function setActiveTab(name){
+  const tabs = {entry:['tabEntryBtn','tabEntry'], trich:['tabTrichBtn','tabTrich'], stats:['tabStatsBtn','tabStats']};
+  Object.keys(tabs).forEach(key=>{
+    const [btnId, divId] = tabs[key];
+    const isActive = key===name;
+    $(btnId).classList.toggle('active', isActive);
+    $(divId).style.display = isActive? 'block':'none';
+  });
+}
+$('tabEntryBtn').addEventListener('click',()=> setActiveTab('entry'));
+$('tabTrichBtn').addEventListener('click',()=>{
+  setActiveTab('trich');
+  renderWithdrawalsTab();
 });
 $('tabStatsBtn').addEventListener('click',()=>{
-  $('tabStatsBtn').classList.add('active'); $('tabEntryBtn').classList.remove('active');
-  $('tabStats').style.display='block'; $('tabEntry').style.display='none';
+  setActiveTab('stats');
   renderStats();
 });
 
@@ -1229,6 +1405,10 @@ document.querySelectorAll('#comboToggle .combo-btn').forEach(btn=>{
 entryDate = todayISO();
 $('fDate').value = entryDate;
 $('fDateDisplay').textContent = ddmmyyyy(entryDate);
+
+wdDate = todayISO();
+$('wdDate').value = wdDate;
+$('wdDateDisplay').textContent = ddmmyyyy(wdDate);
 
 loadEntries();
 </script>
