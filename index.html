@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="app-version" content="2026-07-27.2">
+<meta name="app-version" content="2026-07-27.4">
 <title>Sổ Thu Chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -116,6 +116,17 @@
   .stat.thu{background:var(--green-soft);} .stat.thu .v{color:var(--green);}
   .stat.chi{background:var(--red-soft);} .stat.chi .v{color:var(--red);}
   .stat.lai{background:var(--gold-soft);} .stat.lai .v{color:var(--gold);}
+
+  .biz-row{display:flex;gap:10px;margin-bottom:12px;}
+  .biz-item{flex:1;text-align:center;padding:12px 4px;border-radius:10px;background:var(--paper);}
+  .biz-v{font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--gold);}
+  .biz-l{font-size:10.5px;color:var(--ink-soft);margin-top:3px;}
+
+  .wk-wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:4px;height:150px;padding:4px 2px 0;}
+  .wk-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .wk-val{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--ink-soft);margin-bottom:4px;}
+  .wk-bar{width:70%;max-width:28px;border-radius:4px 4px 0 0;background:var(--green);min-height:2px;}
+  .wk-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:6px;}
 
   .entry{
     display:grid;grid-template-columns:74px 1fr 1fr 1fr;gap:4px;align-items:center;
@@ -355,6 +366,7 @@
       <h2>Lịch sử</h2>
       <div class="pills" id="recentPills">
         <button class="pill active" data-r="month">Tháng này</button>
+        <button class="pill" data-r="prevmonth">Tháng trước</button>
         <button class="pill" data-r="7">7 ngày</button>
         <button class="pill" data-r="30">30 ngày</button>
         <button class="pill" data-r="year">Năm nay</button>
@@ -408,6 +420,7 @@
       <h2>Lịch sử trích quỹ</h2>
       <div class="pills" id="wdPills">
         <button class="pill active" data-r="month">Tháng này</button>
+        <button class="pill" data-r="prevmonth">Tháng trước</button>
         <button class="pill" data-r="7">7 ngày</button>
         <button class="pill" data-r="30">30 ngày</button>
         <button class="pill" data-r="year">Năm nay</button>
@@ -437,6 +450,7 @@
   <div id="tabStats" style="display:none;">
     <div class="pills" id="rangePills">
       <button class="pill active" data-r="month">Tháng này</button>
+      <button class="pill" data-r="prevmonth">Tháng trước</button>
       <button class="pill" data-r="7">7 ngày</button>
       <button class="pill" data-r="30">30 ngày</button>
       <button class="pill" data-r="year">Năm nay</button>
@@ -468,12 +482,53 @@
     </div>
 
     <div class="card">
+      <h2>Chỉ số kinh doanh</h2>
+      <div class="biz-row">
+        <div class="biz-item">
+          <div class="biz-v" id="bizMargin">0%</div>
+          <div class="biz-l">Biên lợi nhuận</div>
+        </div>
+        <div class="biz-item">
+          <div class="biz-v" id="bizChiRatio">0%</div>
+          <div class="biz-l">Tỷ lệ Chi/Thu</div>
+        </div>
+        <div class="biz-item">
+          <div class="biz-v" id="bizAvgDay">0</div>
+          <div class="biz-l">TB/ngày hoạt động</div>
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom:0;">
+        <b>Biên lợi nhuận</b>: cứ 100đ doanh thu thì lãi bao nhiêu đồng — số càng cao càng khoẻ.<br>
+        <b>Tỷ lệ Chi/Thu</b>: chi phí đang "ăn" bao nhiêu % doanh thu — tăng dần qua các kỳ là dấu hiệu cần xem lại chi phí.<br>
+        <b>TB/ngày hoạt động</b>: doanh thu trung bình mỗi ngày có bán hàng (không tính ngày nghỉ) trong khoảng đang lọc.
+      </p>
+    </div>
+
+    <div class="card" id="lossStreakCard" style="display:none;background:var(--red-soft);border-color:var(--red);">
+      <h2 style="color:var(--red);">⚠️ Cảnh báo</h2>
+      <p id="lossStreakText" style="margin:0;font-size:14px;color:var(--red);font-weight:600;"></p>
+      <p class="hint" style="margin-bottom:0;">Tính theo các ngày gần nhất có ghi nhận số liệu, liên tiếp Chi nhiều hơn Thu.</p>
+    </div>
+
+    <div class="card">
       <h2>Thu / Chi theo thời gian</h2>
       <div class="bars" id="barsWrap"></div>
       <div class="legend">
         <span><i class="dot" style="background:var(--green)"></i>Thu</span>
         <span><i class="dot" style="background:var(--red)"></i>Chi</span>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Doanh thu theo Thứ trong tuần</h2>
+      <div class="wk-wrap" id="weekdayChart"></div>
+      <p class="hint" style="margin-bottom:0;">Trung bình doanh thu (Thu) của từng Thứ, tính trên toàn bộ dữ liệu từ trước đến nay — giúp biết ngày nào trong tuần thường đông/vắng khách hơn.</p>
+    </div>
+
+    <div class="card">
+      <h2>Biên lợi nhuận theo tháng</h2>
+      <div class="bars" id="marginChartWrap"></div>
+      <p class="hint" style="margin-bottom:0;">Biên lợi nhuận (%) mỗi tháng = Lãi ÷ Thu × 100. Đường nằm trên mốc 0% là có lãi, dưới 0% là lỗ tháng đó.</p>
     </div>
 
     <div class="card">
@@ -502,6 +557,14 @@
             <td id="ymLaiTm">0</td>
             <td id="ymLaiCk">0</td>
           </tr>
+          <tr>
+            <td>Tăng trưởng so tháng trước</td>
+            <td colspan="2" id="ymGrowth">—</td>
+          </tr>
+          <tr>
+            <td>Trích quỹ / Lãi tháng này</td>
+            <td colspan="2" id="ymWdRatio">—</td>
+          </tr>
           <tr class="ym-divider"><td colspan="3"></td></tr>
           <tr>
             <td id="ymPrevLabel">Lũy kế đến hết tháng trước</td>
@@ -520,7 +583,11 @@
           </tr>
         </tbody>
       </table>
-      <p class="hint" style="margin-bottom:0;">Lũy kế tính từ đầu năm của tháng đang chọn, tự reset về 0 khi sang năm mới.</p>
+      <p class="hint" style="margin-bottom:0;">
+        Lũy kế tính từ đầu năm của tháng đang chọn, tự reset về 0 khi sang năm mới.<br>
+        <b>Tăng trưởng so tháng trước</b>: doanh thu tháng này tăng/giảm bao nhiêu % so với tháng liền trước.<br>
+        <b>Trích quỹ / Lãi</b>: đã rút ra bao nhiêu % lợi nhuận tháng này — trên 100% nghĩa là đang rút cả vào vốn.
+      </p>
     </div>
 
     <div class="card">
@@ -601,6 +668,11 @@ function filterByMode(dataset, mode, customFrom, customTo){
   }
   if(mode==='month'){
     const ym=now.toISOString().slice(0,7);
+    return dataset.filter(e=>e.date.slice(0,7)===ym);
+  }
+  if(mode==='prevmonth'){
+    const prev=new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const ym=prev.toISOString().slice(0,7);
     return dataset.filter(e=>e.date.slice(0,7)===ym);
   }
   if(mode==='year'){
@@ -1176,6 +1248,124 @@ function renderMonthlyTable(){
   $('ymWdCk').textContent = fmt(cur.wd_ck||0);
   $('ymCumTm').textContent = fmt(cumTm);
   $('ymCumCk').textContent = fmt(cumCk);
+
+  // Tăng trưởng doanh thu so với tháng liền trước
+  let prevYear = year, prevMonthNum = monthNum - 1;
+  if(prevMonthNum < 1){ prevMonthNum = 12; prevYear = String(parseInt(year,10)-1); }
+  const prevKey = prevYear+'-'+String(prevMonthNum).padStart(2,'0');
+  const prevMonthData = byMonth[prevKey];
+  const growthEl = $('ymGrowth');
+  if(prevMonthData){
+    const prevThu = prevMonthData.thu_tm + prevMonthData.thu_ck;
+    const curThu = cur.thu_tm + cur.thu_ck;
+    if(prevThu>0){
+      const growth = ((curThu-prevThu)/prevThu)*100;
+      growthEl.textContent = (growth>=0? '+':'') + growth.toFixed(1) + '%' + (growth>=0? ' 📈':' 📉');
+      growthEl.className = growth>=0 ? 'thu' : 'chi';
+    }else{
+      growthEl.textContent = '—'; growthEl.className='';
+    }
+  }else{
+    growthEl.textContent = '— (chưa có tháng trước)'; growthEl.className='';
+  }
+
+  // Tỷ lệ trích quỹ / lãi tháng này
+  const wdRatioEl = $('ymWdRatio');
+  const totalLai = laiTm + laiCk;
+  const totalWd = (cur.wd_tm||0) + (cur.wd_ck||0);
+  if(totalLai>0){
+    const ratio = (totalWd/totalLai)*100;
+    wdRatioEl.textContent = ratio.toFixed(0)+'%';
+    wdRatioEl.className = ratio>100 ? 'chi' : '';
+  }else if(totalWd>0){
+    wdRatioEl.textContent = 'Đã trích dù tháng lỗ/hoà vốn';
+    wdRatioEl.className = 'chi';
+  }else{
+    wdRatioEl.textContent = '—'; wdRatioEl.className='';
+  }
+}
+
+function renderLossStreak(){
+  const sorted = [...entries]
+    .filter(e=>(e.thu_tm+e.thu_ck+e.chi_tm+e.chi_ck)>0)
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  let streak=0;
+  for(const e of sorted){
+    const lai = (e.thu_tm+e.thu_ck)-(e.chi_tm+e.chi_ck);
+    if(lai<0) streak++;
+    else break;
+  }
+  const card = $('lossStreakCard');
+  if(streak>=3){
+    card.style.display='block';
+    $('lossStreakText').textContent = `Đã lỗ ${streak} ngày liên tiếp gần đây nhất.`;
+  }else{
+    card.style.display='none';
+  }
+}
+
+function renderWeekdayChart(){
+  const sums=[0,0,0,0,0,0,0], counts=[0,0,0,0,0,0,0]; // 0=T2 ... 6=CN
+  entries.forEach(e=>{
+    const d = new Date(e.date+'T00:00:00');
+    const jsDay = d.getDay(); // 0=CN,1=T2,...6=T7
+    const idx = jsDay===0 ? 6 : jsDay-1;
+    sums[idx] += (e.thu_tm+e.thu_ck);
+    counts[idx] += 1;
+  });
+  const avgs = sums.map((s,i)=> counts[i]? s/counts[i] : 0);
+  const labels = ['T2','T3','T4','T5','T6','T7','CN'];
+  const maxV = Math.max(1, ...avgs);
+  $('weekdayChart').innerHTML = labels.map((lb,i)=>{
+    const h = Math.round((avgs[i]/maxV)*120);
+    return `<div class="wk-col">
+      <div class="wk-val">${fmtShort(avgs[i])}</div>
+      <div class="wk-bar" style="height:${Math.max(h,avgs[i]>0?2:0)}px"></div>
+      <div class="wk-label">${lb}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMarginChart(){
+  const byMonth = getMonthlyTotals();
+  const months = Object.keys(byMonth).sort();
+  if(months.length===0){
+    $('marginChartWrap').innerHTML = '<div class="empty">Chưa có dữ liệu</div>';
+    return;
+  }
+  const labels = months.map(ym=>'T'+ym.slice(5,7));
+  const values = months.map(ym=>{
+    const m = byMonth[ym];
+    const thu = m.thu_tm+m.thu_ck, chi = m.chi_tm+m.chi_ck;
+    return thu>0 ? ((thu-chi)/thu*100) : 0;
+  });
+  $('marginChartWrap').innerHTML = buildMarginLineSVG(labels, values);
+  $('marginChartWrap').scrollLeft = $('marginChartWrap').scrollWidth;
+}
+
+function buildMarginLineSVG(labels, values){
+  const n=labels.length;
+  const gap=58;
+  const padL=10, padR=10, padTop=26, padBottom=22, plotH=118;
+  const width=Math.max(280, n*gap+padL+padR);
+  const height=padTop+plotH+padBottom;
+  const maxAbs=Math.max(10, ...values.map(v=>Math.abs(v)));
+  const x=(i)=> padL + gap/2 + i*gap;
+  const y=(v)=> padTop + plotH/2 - (v/maxAbs)*(plotH/2);
+  const pts = values.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+
+  let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" font-family="Space Mono, monospace">`;
+  svg += `<line x1="0" y1="${y(0)}" x2="${width}" y2="${y(0)}" stroke="#e1d9c6" stroke-width="1"/>`;
+  svg += `<polyline points="${pts}" fill="none" stroke="#a9822f" stroke-width="2"/>`;
+  for(let i=0;i<n;i++){
+    const xi=x(i), yi=y(values[i]);
+    const color = values[i]>=0 ? '#3f6b4a' : '#a63d2f';
+    svg += `<circle cx="${xi}" cy="${yi}" r="3" fill="${color}"/>`;
+    svg += `<text x="${xi}" y="${yi-8}" font-size="9.5" fill="${color}" text-anchor="middle">${values[i].toFixed(0)}%</text>`;
+    svg += `<text x="${xi}" y="${height-6}" font-size="9.5" fill="#4b5a55" text-anchor="middle">${labels[i]}</text>`;
+  }
+  svg += `</svg>`;
+  return svg;
 }
 
 function renderStats(){
@@ -1186,6 +1376,20 @@ function renderStats(){
   $('sThu').textContent=fmt(sThu);
   $('sChi').textContent=fmt(sChi);
   $('sLai').textContent=fmt(sThu-sChi);
+
+  // Chỉ số kinh doanh (theo đúng khoảng đang lọc ở trên)
+  const margin = sThu>0 ? ((sThu-sChi)/sThu*100) : 0;
+  const chiRatio = sThu>0 ? (sChi/sThu*100) : 0;
+  const activeDays = data.filter(e=>(e.thu_tm+e.thu_ck)>0).length;
+  const avgPerDay = activeDays>0 ? sThu/activeDays : 0;
+  $('bizMargin').textContent = margin.toFixed(1)+'%';
+  $('bizMargin').style.color = margin>=0 ? 'var(--green)' : 'var(--red)';
+  $('bizChiRatio').textContent = chiRatio.toFixed(1)+'%';
+  $('bizAvgDay').textContent = fmtShort(avgPerDay);
+
+  renderLossStreak();
+  renderWeekdayChart();
+  renderMarginChart();
 
   let keys=[], labels=[], thuArr=[], chiArr=[];
   const hasCustomStats = !!(filterFromStats || filterToStats);
