@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="app-version" content="2026-08-09.5">
+<meta name="app-version" content="2026-08-09.6">
 <title>Quản lý thu chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -888,14 +888,20 @@
   <div id="tabAllStats" style="display:none;">
     <div class="card">
       <h2>Tài sản tích lũy gia đình</h2>
-      <div class="stat-row" style="margin-bottom:10px;">
+      <div class="stat-row" style="margin-bottom:14px;">
         <div class="stat lai" style="flex:1;"><div class="v" id="allAssetTotal" style="font-size:19px;">0</div><div class="l">Tổng tích lũy</div></div>
       </div>
-      <div class="stat-row">
-        <div class="stat lai"><div class="v" id="allAssetTm">0</div><div class="l">Tiền mặt</div></div>
-        <div class="stat lai"><div class="v" id="allAssetCk">0</div><div class="l">Chuyển khoản</div></div>
+      <label class="filter-label">Từ kinh doanh (sau trích quỹ)</label>
+      <div class="stat-row" style="margin-bottom:14px;">
+        <div class="stat lai"><div class="v" id="allBizTm">0</div><div class="l">Tiền mặt</div></div>
+        <div class="stat lai"><div class="v" id="allBizCk">0</div><div class="l">Chuyển khoản</div></div>
       </div>
-      <p class="hint" style="margin-top:10px;margin-bottom:0;">= Lũy kế Kinh doanh toàn thời gian (sau trích quỹ) + Lũy kế Sinh hoạt toàn thời gian.</p>
+      <label class="filter-label">Từ sinh hoạt</label>
+      <div class="stat-row">
+        <div class="stat lai"><div class="v" id="allHomeTm">0</div><div class="l">Tiền mặt</div></div>
+        <div class="stat lai"><div class="v" id="allHomeCk">0</div><div class="l">Chuyển khoản</div></div>
+      </div>
+      <p class="hint" style="margin-top:10px;margin-bottom:0;">Tổng tích lũy = Lũy kế Kinh doanh toàn thời gian (sau trích quỹ) + Lũy kế Sinh hoạt toàn thời gian.</p>
     </div>
 
     <div class="card">
@@ -2112,8 +2118,10 @@ function renderAllStats(){
   const totalTm = biz.tm + home.tm;
   const totalCk = biz.ck + home.ck;
   $('allAssetTotal').textContent = fmt(totalTm + totalCk);
-  $('allAssetTm').textContent = fmt(totalTm);
-  $('allAssetCk').textContent = fmt(totalCk);
+  $('allBizTm').textContent = fmt(biz.tm);
+  $('allBizCk').textContent = fmt(biz.ck);
+  $('allHomeTm').textContent = fmt(home.tm);
+  $('allHomeCk').textContent = fmt(home.ck);
 
   const currentYm = todayISO().slice(0,7);
   const chiSHThisMonth = homeTransactions
