@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="app-version" content="2026-08-09.4">
+<meta name="app-version" content="2026-08-09.5">
 <title>Quản lý thu chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -728,6 +728,10 @@
             <td>Trích quỹ / Lãi tháng này</td>
             <td colspan="2" id="ymWdRatio">—</td>
           </tr>
+          <tr>
+            <td>Giữ lại tái đầu tư</td>
+            <td colspan="2" id="ymRetainRatio">—</td>
+          </tr>
           <tr class="ym-divider"><td colspan="3"></td></tr>
           <tr>
             <td id="ymPrevLabel">Lũy kế đến hết tháng trước</td>
@@ -749,7 +753,8 @@
       <p class="hint" style="margin-top:10px;margin-bottom:0;">
         Lũy kế tính từ đầu năm của tháng đang chọn, tự reset về 0 khi sang năm mới.<br>
         <b>Tăng trưởng so tháng trước</b>: doanh thu tháng này tăng/giảm bao nhiêu % so với tháng liền trước.<br>
-        <b>Trích quỹ / Lãi</b>: đã rút ra bao nhiêu % lợi nhuận tháng này — trên 100% nghĩa là đang rút cả vào vốn.
+        <b>Trích quỹ / Lãi</b>: đã rút ra bao nhiêu % lợi nhuận tháng này — trên 100% nghĩa là đang rút cả vào vốn.<br>
+        <b>Giữ lại tái đầu tư</b> = 100% − Trích quỹ/Lãi — phần lợi nhuận còn giữ lại trong kinh doanh để phát triển tiếp.
       </p>
     </div>
 
@@ -825,6 +830,14 @@
       </div>
     </div>
 
+    <div class="card">
+      <h2>Tỷ lệ tiết kiệm sinh hoạt</h2>
+      <div class="stat-row">
+        <div class="stat lai" style="flex:1;"><div class="v" id="hsSavingsRate">0%</div><div class="l">Tiết kiệm được trong kỳ đang xem</div></div>
+      </div>
+      <p class="hint" style="margin-top:10px;margin-bottom:0;">= (Thu − Chi) ÷ Thu × 100%. Số dương nghĩa là còn dư lại sau chi tiêu; số âm nghĩa là đã chi vượt quá số tiền nhận được trong kỳ.</p>
+    </div>
+
     <div class="card" id="homeWarnCard" style="display:none;background:var(--red-soft);border-color:var(--red);">
       <h2 style="color:var(--red);">⚠️ Cảnh báo</h2>
       <p style="margin:0;font-size:14px;color:var(--red);font-weight:600;">Chi sinh hoạt đang nhiều hơn Thu sinh hoạt trong kỳ đang xem.</p>
@@ -837,6 +850,14 @@
         <div class="stat lai"><div class="v" id="hsCumCk">0</div><div class="l">Chuyển khoản</div></div>
       </div>
       <p class="hint" style="margin-top:10px;margin-bottom:0;">Cộng dồn từ ngày đầu tiên có dữ liệu, không reset theo năm — phản ánh đúng số tiền sinh hoạt còn thực có. (Không áp dụng bộ lọc ở trên.)</p>
+    </div>
+
+    <div class="card">
+      <h2>Số tháng phòng thủ (Runway)</h2>
+      <div class="stat-row">
+        <div class="stat lai" style="flex:1;"><div class="v" id="hsRunway">0 tháng</div><div class="l">Đủ chi tiêu sinh hoạt nếu không còn thu nhập nào thêm</div></div>
+      </div>
+      <p class="hint" style="margin-top:10px;margin-bottom:0;">= Lũy kế sinh hoạt hiện có ÷ Chi sinh hoạt trung bình mỗi tháng (toàn thời gian). (Không áp dụng bộ lọc ở trên.)</p>
     </div>
 
     <div class="card">
@@ -867,6 +888,9 @@
   <div id="tabAllStats" style="display:none;">
     <div class="card">
       <h2>Tài sản tích lũy gia đình</h2>
+      <div class="stat-row" style="margin-bottom:10px;">
+        <div class="stat lai" style="flex:1;"><div class="v" id="allAssetTotal" style="font-size:19px;">0</div><div class="l">Tổng tích lũy</div></div>
+      </div>
       <div class="stat-row">
         <div class="stat lai"><div class="v" id="allAssetTm">0</div><div class="l">Tiền mặt</div></div>
         <div class="stat lai"><div class="v" id="allAssetCk">0</div><div class="l">Chuyển khoản</div></div>
@@ -875,21 +899,26 @@
     </div>
 
     <div class="card">
+      <h2>Tài sản tích lũy theo tháng</h2>
+      <div class="bars" id="assetTrendChart"></div>
+      <p class="hint" style="margin-top:10px;margin-bottom:0;">Tổng tích lũy gia đình cộng dồn qua từng tháng, tính trên toàn bộ dữ liệu — cho thấy xu hướng tăng/giảm theo thời gian.</p>
+    </div>
+
+    <div class="card">
+      <h2>Dòng tiền ròng hàng tháng</h2>
+      <div class="stat-row" style="margin-bottom:12px;">
+        <div class="stat lai" style="flex:1;"><div class="v" id="netFlowThisMonth">0</div><div class="l">Tháng này</div></div>
+      </div>
+      <div class="bars" id="netFlowChart"></div>
+      <p class="hint" style="margin-top:10px;margin-bottom:0;">= (Lãi Kinh doanh − Trích quỹ) + (Thu Sinh hoạt − Chi Sinh hoạt). Đây là số tiền thực tăng/giảm thêm vào tài sản gia đình mỗi tháng, đã loại bỏ phần trích quỹ (chỉ là chuyển tiền nội bộ, không tính 2 lần).</p>
+    </div>
+
+    <div class="card">
       <h2>Tỷ lệ dùng quỹ tháng này</h2>
       <div class="stat-row">
         <div class="stat lai"><div class="v" id="allUseRatio">0%</div><div class="l">Chi sinh hoạt ÷ Trích quỹ</div></div>
       </div>
       <p class="hint" style="margin-top:10px;margin-bottom:0;">Trên 100% nghĩa là chi tiêu sinh hoạt tháng này đã vượt số tiền trích quỹ nhận về.</p>
-    </div>
-
-    <div class="card">
-      <h2>Lãi Kinh doanh vs Chi Sinh hoạt theo tháng</h2>
-      <div class="bars" id="dualBarChart"></div>
-      <div class="legend">
-        <span><i class="dot" style="background:var(--green)"></i>Lãi Kinh doanh</span>
-        <span><i class="dot" style="background:var(--red)"></i>Chi Sinh hoạt</span>
-      </div>
-      <p class="hint" style="margin-top:10px;margin-bottom:0;">So sánh xem kinh doanh làm ra có đang đủ nuôi chi tiêu gia đình hàng tháng không.</p>
     </div>
   </div>
 </div>
@@ -1607,9 +1636,11 @@ function filteredWithdrawals(){
 
 function fmtShort(n){
   if(!n) return '0';
-  if(n>=1000000){ const v=n/1000000; return (Math.round(v*10)/10)+'tr'; }
-  if(n>=1000){ const v=n/1000; return (Math.round(v*10)/10)+'k'; }
-  return String(n);
+  const sign = n<0 ? '-' : '';
+  const abs = Math.abs(n);
+  if(abs>=1000000){ const v=abs/1000000; return sign+(Math.round(v*10)/10)+'tr'; }
+  if(abs>=1000){ const v=abs/1000; return sign+(Math.round(v*10)/10)+'k'; }
+  return sign+String(abs);
 }
 
 function buildLineChartSVG(labels, thuArr, chiArr){
@@ -1753,6 +1784,16 @@ function renderMonthlyTable(){
     wdRatioEl.className = 'chi';
   }else{
     wdRatioEl.textContent = '—'; wdRatioEl.className='';
+  }
+
+  const retainEl = $('ymRetainRatio');
+  if(totalLai>0){
+    const ratio = (totalWd/totalLai)*100;
+    const retain = 100 - ratio;
+    retainEl.textContent = retain.toFixed(0)+'%';
+    retainEl.className = retain>=0 ? 'thu' : 'chi';
+  }else{
+    retainEl.textContent = '—'; retainEl.className='';
   }
 }
 
@@ -1961,9 +2002,34 @@ function renderHomeStats(){
   $('hsBalance').textContent = fmt(sThu-sChi);
   $('homeWarnCard').style.display = (sChi>sThu) ? 'block' : 'none';
 
+  const savingsEl = $('hsSavingsRate');
+  if(sThu>0){
+    const rate = ((sThu-sChi)/sThu)*100;
+    savingsEl.textContent = rate.toFixed(0)+'%';
+    savingsEl.style.color = rate>=0 ? 'var(--green)' : 'var(--red)';
+  }else{
+    savingsEl.textContent = '—';
+    savingsEl.style.color = 'var(--gold)';
+  }
+
   const cum = computeHomeLifetimeCumulative();
   $('hsCumTm').textContent = fmt(cum.tm);
   $('hsCumCk').textContent = fmt(cum.ck);
+
+  const byMonthAll = getHomeMonthlyTotals();
+  const allMonthKeysH = Object.keys(byMonthAll);
+  const totalChiAllTime = allMonthKeysH.reduce((s,ym)=>s+byMonthAll[ym].chi,0);
+  const avgChi = allMonthKeysH.length>0 ? totalChiAllTime/allMonthKeysH.length : 0;
+  const totalCum = cum.tm + cum.ck;
+  const runwayEl = $('hsRunway');
+  if(avgChi>0){
+    const runway = totalCum/avgChi;
+    runwayEl.textContent = runway.toFixed(1)+' tháng';
+    runwayEl.style.color = runway>=0 ? 'var(--green)' : 'var(--red)';
+  }else{
+    runwayEl.textContent = '—';
+    runwayEl.style.color = 'var(--gold)';
+  }
 
   renderCategoryDonut(data, 'thu', 'thuCat');
   renderCategoryDonut(data, 'chi', 'cat');
@@ -1994,27 +2060,47 @@ function computeBusinessLifetimeCumulative(){
   return {tm:cumTm, ck:cumCk};
 }
 
-function buildDualBarSVG(labels, seriesA, seriesB){
-  const n = labels.length;
-  const gap = 58;
-  const padL=10, padR=10, padTop=20, padBottom=22, plotH=120;
-  const width = Math.max(280, n*gap+padL+padR);
-  const height = padTop+plotH+padBottom;
-  const maxV = Math.max(1, ...seriesA.map(Math.abs), ...seriesB.map(Math.abs));
-  const zeroY = padTop + plotH/2;
-  const barW = 10;
+function getCombinedAssetMonthlySeries(){
+  const bizMonths = getMonthlyTotals();
+  const homeMonths = getHomeMonthlyTotals();
+  const allKeys = [...new Set([...Object.keys(bizMonths), ...Object.keys(homeMonths)])].sort();
+  let cum = 0;
+  const labels=[], netValues=[], cumValues=[];
+  allKeys.forEach(ym=>{
+    const b = bizMonths[ym];
+    const h = homeMonths[ym];
+    // bizNet = Lãi kinh doanh - Trích quỹ (đã trừ sẵn wd trong dữ liệu getMonthlyTotals)
+    const bizNet = b ? (b.thu_tm+b.thu_ck)-(b.chi_tm+b.chi_ck)-((b.wd_tm||0)+(b.wd_ck||0)) : 0;
+    // homeNet = Thu sinh hoạt - Chi sinh hoạt (đã gồm cả tiền nhận từ trích quỹ, không trừ 2 lần)
+    const homeNet = h ? (h.thu - h.chi) : 0;
+    const net = bizNet + homeNet;
+    cum += net;
+    labels.push('T'+ym.slice(5,7));
+    netValues.push(net);
+    cumValues.push(cum);
+  });
+  return {labels, netValues, cumValues};
+}
+
+function buildValueLineSVG(labels, values){
+  const n=labels.length;
+  const gap=58;
+  const padL=10, padR=10, padTop=26, padBottom=22, plotH=118;
+  const width=Math.max(280, n*gap+padL+padR);
+  const height=padTop+plotH+padBottom;
+  const maxAbs=Math.max(1, ...values.map(v=>Math.abs(v)));
+  const x=(i)=> padL + gap/2 + i*gap;
+  const y=(v)=> padTop + plotH/2 - (v/maxAbs)*(plotH/2);
+  const pts = values.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
   let svg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" font-family="Space Mono, monospace">`;
-  svg += `<line x1="0" y1="${zeroY}" x2="${width}" y2="${zeroY}" stroke="#e1d9c6" stroke-width="1"/>`;
+  svg += `<line x1="0" y1="${y(0)}" x2="${width}" y2="${y(0)}" stroke="#e1d9c6" stroke-width="1"/>`;
+  svg += `<polyline points="${pts}" fill="none" stroke="#a9822f" stroke-width="2"/>`;
   for(let i=0;i<n;i++){
-    const cx = padL + gap/2 + i*gap;
-    const aVal = seriesA[i], bVal = seriesB[i];
-    const aH = Math.abs((aVal/maxV)*(plotH/2));
-    const bH = Math.abs((bVal/maxV)*(plotH/2));
-    const aY = aVal>=0? zeroY-aH : zeroY;
-    const bY = bVal>=0? zeroY-bH : zeroY;
-    svg += `<rect x="${cx-barW-2}" y="${aY}" width="${barW}" height="${Math.max(aH,1)}" fill="#3f6b4a" rx="2"/>`;
-    svg += `<rect x="${cx+2}" y="${bY}" width="${barW}" height="${Math.max(bH,1)}" fill="#a63d2f" rx="2"/>`;
-    svg += `<text x="${cx}" y="${height-6}" font-size="9.5" fill="#4b5a55" text-anchor="middle">${labels[i]}</text>`;
+    const xi=x(i), yi=y(values[i]);
+    const color = values[i]>=0 ? '#3f6b4a' : '#a63d2f';
+    svg += `<circle cx="${xi}" cy="${yi}" r="3" fill="${color}"/>`;
+    svg += `<text x="${xi}" y="${yi-8}" font-size="9.5" fill="${color}" text-anchor="middle">${fmtShort(values[i])}</text>`;
+    svg += `<text x="${xi}" y="${height-6}" font-size="9.5" fill="#4b5a55" text-anchor="middle">${labels[i]}</text>`;
   }
   svg += `</svg>`;
   return svg;
@@ -2023,8 +2109,11 @@ function buildDualBarSVG(labels, seriesA, seriesB){
 function renderAllStats(){
   const biz = computeBusinessLifetimeCumulative();
   const home = computeHomeLifetimeCumulative();
-  $('allAssetTm').textContent = fmt(biz.tm + home.tm);
-  $('allAssetCk').textContent = fmt(biz.ck + home.ck);
+  const totalTm = biz.tm + home.tm;
+  const totalCk = biz.ck + home.ck;
+  $('allAssetTotal').textContent = fmt(totalTm + totalCk);
+  $('allAssetTm').textContent = fmt(totalTm);
+  $('allAssetCk').textContent = fmt(totalCk);
 
   const currentYm = todayISO().slice(0,7);
   const chiSHThisMonth = homeTransactions
@@ -2037,23 +2126,25 @@ function renderAllStats(){
   $('allUseRatio').textContent = ratio===null? '—' : ratio.toFixed(0)+'%';
   $('allUseRatio').style.color = (ratio!==null && ratio>100) ? 'var(--red)' : 'var(--gold)';
 
-  const bizMonths = getMonthlyTotals();
-  const homeMonths = getHomeMonthlyTotals();
-  const allMonthKeys = [...new Set([...Object.keys(bizMonths), ...Object.keys(homeMonths)])].sort();
-  if(allMonthKeys.length===0){
-    $('dualBarChart').innerHTML = '<div class="empty">Chưa có dữ liệu</div>';
+  const series = getCombinedAssetMonthlySeries();
+  if(series.labels.length===0){
+    $('assetTrendChart').innerHTML = '<div class="empty">Chưa có dữ liệu</div>';
+    $('netFlowChart').innerHTML = '<div class="empty">Chưa có dữ liệu</div>';
+    $('netFlowThisMonth').textContent = '0';
   }else{
-    const labels = allMonthKeys.map(ym=>'T'+ym.slice(5,7));
-    const laiArr = allMonthKeys.map(ym=>{
-      const d = bizMonths[ym];
-      return d ? (d.thu_tm+d.thu_ck)-(d.chi_tm+d.chi_ck) : 0;
-    });
-    const chiSHArr = allMonthKeys.map(ym=>{
-      const d = homeMonths[ym];
-      return d ? d.chi : 0;
-    });
-    $('dualBarChart').innerHTML = buildDualBarSVG(labels, laiArr, chiSHArr);
-    $('dualBarChart').scrollLeft = $('dualBarChart').scrollWidth;
+    $('assetTrendChart').innerHTML = buildValueLineSVG(series.labels, series.cumValues);
+    $('assetTrendChart').scrollLeft = $('assetTrendChart').scrollWidth;
+    $('netFlowChart').innerHTML = buildValueLineSVG(series.labels, series.netValues);
+    $('netFlowChart').scrollLeft = $('netFlowChart').scrollWidth;
+
+    const lastIdx = series.labels.length-1;
+    const thisMonthLabel = 'T'+currentYm.slice(5,7);
+    let netThisMonth = 0;
+    if(series.labels[lastIdx]===thisMonthLabel){
+      netThisMonth = series.netValues[lastIdx];
+    }
+    $('netFlowThisMonth').textContent = fmt(netThisMonth);
+    $('netFlowThisMonth').style.color = netThisMonth>=0 ? 'var(--green)' : 'var(--red)';
   }
 }
 
