@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="app-version" content="2026-08-09.3">
+<meta name="app-version" content="2026-08-09.4">
 <title>Quản lý thu chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -78,6 +78,26 @@
     display:block;font-size:11px;color:var(--ink-soft);font-weight:700;
     text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;
   }
+
+  .cat-filter-dropdown{position:relative;}
+  .cat-filter-trigger{
+    width:100%;text-align:left;padding:12px 14px;border-radius:10px;border:1.5px solid var(--paper-line);
+    background:#fffef9;font-family:'Inter';font-size:14px;color:var(--ink);font-weight:600;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .cat-filter-trigger span{color:var(--ink-soft);font-size:12px;}
+  .cat-filter-panel{
+    position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:20;
+    background:var(--card);border:1.5px solid var(--paper-line);border-radius:12px;
+    padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.14);
+  }
+  .cat-filter-list{max-height:220px;overflow-y:auto;}
+  .cat-check-row{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px dashed var(--paper-line);}
+  .cat-check-row:last-child{border-bottom:none;}
+  .cat-check-row input[type=checkbox]{width:19px;height:19px;accent-color:var(--gold);flex:none;}
+  .cat-check-row label{font-size:13.5px;margin:0;flex:1;color:var(--ink);}
+  .cat-filter-footer{display:flex;gap:8px;padding:8px 4px 2px;border-top:1px solid var(--paper-line);margin-top:4px;}
+  .cat-filter-footer .btn{padding:10px;font-size:13px;}
 
   .card{
     background:var(--card);border:1px solid var(--paper-line);
@@ -773,6 +793,29 @@
       <button class="pill" data-r="30">30 ngày</button>
       <button class="pill" data-r="year">Năm nay</button>
     </div>
+    <div class="row2" style="margin-bottom:10px;">
+      <div class="field" style="margin-bottom:0;">
+        <label>Từ ngày</label>
+        <div class="date-field">
+          <div class="date-display"><span id="hsFromDisplay">—</span><span class="cal">📅</span></div>
+          <input type="date" id="hsFrom">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Đến ngày</label>
+        <div class="date-field">
+          <div class="date-display"><span id="hsToDisplay">—</span><span class="cal">📅</span></div>
+          <input type="date" id="hsTo">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-ghost" id="clearHsFilterBtn" style="margin-bottom:16px;">Bỏ lọc ngày tuỳ chỉnh</button>
+
+    <label class="filter-label">Lọc theo hạng mục (chọn nhiều)</label>
+    <div class="cat-filter-dropdown" id="hsCatDropdown" style="margin-bottom:16px;">
+      <button class="cat-filter-trigger" id="hsCatTrigger" type="button">Tất cả hạng mục <span>▾</span></button>
+      <div class="cat-filter-panel" id="hsCatPanel" style="display:none;"></div>
+    </div>
 
     <div class="card">
       <div class="stat-row">
@@ -793,7 +836,16 @@
         <div class="stat lai"><div class="v" id="hsCumTm">0</div><div class="l">Tiền mặt</div></div>
         <div class="stat lai"><div class="v" id="hsCumCk">0</div><div class="l">Chuyển khoản</div></div>
       </div>
-      <p class="hint" style="margin-top:10px;margin-bottom:0;">Cộng dồn từ ngày đầu tiên có dữ liệu, không reset theo năm — phản ánh đúng số tiền sinh hoạt còn thực có.</p>
+      <p class="hint" style="margin-top:10px;margin-bottom:0;">Cộng dồn từ ngày đầu tiên có dữ liệu, không reset theo năm — phản ánh đúng số tiền sinh hoạt còn thực có. (Không áp dụng bộ lọc ở trên.)</p>
+    </div>
+
+    <div class="card">
+      <h2>Thu theo hạng mục</h2>
+      <div class="donut-row">
+        <div class="donut" id="thuCatDonutEl"><div class="donut-hole"><div class="pct" id="thuCatDonutPct">0%</div><div class="lbl" id="thuCatDonutLbl">—</div></div></div>
+        <div class="donut-legend" id="thuCatDonutLegend"></div>
+      </div>
+      <p class="hint" style="margin-top:10px;margin-bottom:0;">Tỷ lệ các nguồn thu sinh hoạt theo hạng mục trong kỳ đang xem.</p>
     </div>
 
     <div class="card">
@@ -888,6 +940,7 @@ let homeFilterTo='';
 let homeStatsRange='month';
 let homeStatsFilterFrom='';
 let homeStatsFilterTo='';
+let hsSelectedCategories=[];
 
 const fmt=(n)=> (n||0).toLocaleString('vi-VN');
 const unformat=(s)=> parseInt((s||'0').replace(/\D/g,''),10)||0;
@@ -1823,8 +1876,84 @@ function buildMultiDonutGradient(segments){
   return `conic-gradient(${parts.join(', ')})`;
 }
 
+function renderCatFilterChips(){
+  const trigger = $('hsCatTrigger');
+  const panel = $('hsCatPanel');
+
+  let label;
+  if(hsSelectedCategories.length===0) label = 'Tất cả hạng mục';
+  else if(hsSelectedCategories.length===1) label = categoryName(hsSelectedCategories[0]);
+  else label = `Đã chọn ${hsSelectedCategories.length} hạng mục`;
+  trigger.innerHTML = `${label} <span>▾</span>`;
+
+  panel.innerHTML = `<div class="cat-filter-list">` + categories.map(c=>{
+    const checked = hsSelectedCategories.includes(c.id);
+    return `<div class="cat-check-row">
+      <input type="checkbox" id="chk-${c.id}" data-cat="${c.id}" ${checked?'checked':''}>
+      <label for="chk-${c.id}">${c.name}</label>
+    </div>`;
+  }).join('') + `</div>
+    <div class="cat-filter-footer">
+      <button class="btn btn-ghost" id="catClearAllBtn">Bỏ chọn hết</button>
+      <button class="btn btn-primary" id="catDoneBtn">Xong</button>
+    </div>`;
+
+  panel.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const cat = cb.dataset.cat;
+      if(cb.checked){
+        if(!hsSelectedCategories.includes(cat)) hsSelectedCategories = hsSelectedCategories.concat(cat);
+      }else{
+        hsSelectedCategories = hsSelectedCategories.filter(c=>c!==cat);
+      }
+      renderHomeStats();
+    });
+  });
+  $('catClearAllBtn').onclick = ()=>{ hsSelectedCategories=[]; renderHomeStats(); };
+  $('catDoneBtn').onclick = ()=>{ panel.style.display='none'; };
+}
+
+document.addEventListener('click',(e)=>{
+  const dd = $('hsCatDropdown');
+  if(!dd) return;
+  if(!dd.contains(e.target)) $('hsCatPanel').style.display='none';
+});
+
+function renderCategoryDonut(data, type, prefix){
+  const catTotals = {};
+  data.filter(h=>h.type===type).forEach(h=>{
+    catTotals[h.category] = (catTotals[h.category]||0) + h.amount;
+  });
+  const catEntries = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  const total = catEntries.reduce((s,[,v])=>s+v,0);
+  const elDonut = $(prefix+'DonutEl'), elPct = $(prefix+'DonutPct'), elLbl = $(prefix+'DonutLbl'), elLegend = $(prefix+'DonutLegend');
+  if(catEntries.length===0){
+    elDonut.style.background = 'var(--paper-line)';
+    elPct.textContent = '—';
+    elLbl.textContent = 'Chưa có';
+    elLegend.innerHTML = `<div class="empty">Chưa có khoản ${type==='thu'?'thu':'chi'} nào trong kỳ này</div>`;
+    return;
+  }
+  const segments = catEntries.map(([id,val],i)=>({value:val, color:CAT_COLORS[i%CAT_COLORS.length]}));
+  elDonut.style.background = buildMultiDonutGradient(segments);
+  const top = catEntries[0];
+  elPct.textContent = total>0? Math.round(top[1]/total*100)+'%' : '—';
+  elLbl.textContent = categoryName(top[0]);
+  elLegend.innerHTML = catEntries.map(([id,val],i)=>{
+    const pct = total>0? Math.round(val/total*100) : 0;
+    const color = CAT_COLORS[i%CAT_COLORS.length];
+    return `<div><i class="dot" style="background:${color}"></i>${categoryName(id)}: ${fmt(val)} (${pct}%)</div>`;
+  }).join('');
+}
+
 function renderHomeStats(){
-  const data = filteredHomeTransactions(homeStatsRange, homeStatsFilterFrom, homeStatsFilterTo);
+  renderCatFilterChips();
+
+  let data = filteredHomeTransactions(homeStatsRange, homeStatsFilterFrom, homeStatsFilterTo);
+  if(hsSelectedCategories.length>0){
+    data = data.filter(h=>hsSelectedCategories.includes(h.category));
+  }
+
   const sThu = data.filter(h=>h.type==='thu').reduce((s,h)=>s+h.amount,0);
   const sChi = data.filter(h=>h.type==='chi').reduce((s,h)=>s+h.amount,0);
   $('hsThu').textContent = fmt(sThu);
@@ -1836,29 +1965,8 @@ function renderHomeStats(){
   $('hsCumTm').textContent = fmt(cum.tm);
   $('hsCumCk').textContent = fmt(cum.ck);
 
-  const catTotals = {};
-  data.filter(h=>h.type==='chi').forEach(h=>{
-    catTotals[h.category] = (catTotals[h.category]||0) + h.amount;
-  });
-  const catEntries = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
-  const totalChiCat = catEntries.reduce((s,[,v])=>s+v,0);
-  if(catEntries.length===0){
-    $('catDonutEl').style.background = 'var(--paper-line)';
-    $('catDonutPct').textContent = '—';
-    $('catDonutLbl').textContent = 'Chưa có';
-    $('catDonutLegend').innerHTML = '<div class="empty">Chưa có khoản chi nào trong kỳ này</div>';
-  }else{
-    const segments = catEntries.map(([id,val],i)=>({value:val, color:CAT_COLORS[i%CAT_COLORS.length]}));
-    $('catDonutEl').style.background = buildMultiDonutGradient(segments);
-    const top = catEntries[0];
-    $('catDonutPct').textContent = totalChiCat>0? Math.round(top[1]/totalChiCat*100)+'%' : '—';
-    $('catDonutLbl').textContent = categoryName(top[0]);
-    $('catDonutLegend').innerHTML = catEntries.map(([id,val],i)=>{
-      const pct = totalChiCat>0? Math.round(val/totalChiCat*100) : 0;
-      const color = CAT_COLORS[i%CAT_COLORS.length];
-      return `<div><i class="dot" style="background:${color}"></i>${categoryName(id)}: ${fmt(val)} (${pct}%)</div>`;
-    }).join('');
-  }
+  renderCategoryDonut(data, 'thu', 'thuCat');
+  renderCategoryDonut(data, 'chi', 'cat');
 
   const byMonth = getHomeMonthlyTotals();
   const months = Object.keys(byMonth).sort();
@@ -2314,6 +2422,27 @@ document.querySelectorAll('#homeStatsPills .pill').forEach(btn=>{
     homeStatsRange=btn.dataset.r;
     renderHomeStats();
   });
+});
+$('hsFrom').addEventListener('change',()=>{
+  homeStatsFilterFrom = $('hsFrom').value;
+  $('hsFromDisplay').textContent = homeStatsFilterFrom? ddmmyyyy(homeStatsFilterFrom) : '—';
+  renderHomeStats();
+});
+$('hsTo').addEventListener('change',()=>{
+  homeStatsFilterTo = $('hsTo').value;
+  $('hsToDisplay').textContent = homeStatsFilterTo? ddmmyyyy(homeStatsFilterTo) : '—';
+  renderHomeStats();
+});
+$('clearHsFilterBtn').addEventListener('click',()=>{
+  homeStatsFilterFrom=''; homeStatsFilterTo='';
+  $('hsFrom').value=''; $('hsTo').value='';
+  $('hsFromDisplay').textContent='—'; $('hsToDisplay').textContent='—';
+  renderHomeStats();
+});
+$('hsCatTrigger').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  const panel = $('hsCatPanel');
+  panel.style.display = (panel.style.display==='none') ? 'block' : 'none';
 });
 
 entryDate = todayISO();
