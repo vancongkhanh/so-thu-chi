@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="app-version" content="2026-08-10.1">
+<meta name="app-version" content="2026-08-10.2">
 <title>Quản lý thu chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,7 +85,11 @@
     background:#fffef9;font-family:'Inter';font-size:14px;color:var(--ink);font-weight:600;
     display:flex;justify-content:space-between;align-items:center;
   }
-  .cat-filter-trigger span{color:var(--ink-soft);font-size:12px;}
+  .cat-filter-trigger span{color:var(--ink-soft);font-size:12px;flex:none;}
+  .cat-filter-label-text{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px;
+    color:var(--ink);font-size:14px;
+  }
   .cat-filter-panel{
     position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:20;
     background:var(--card);border:1.5px solid var(--paper-line);border-radius:12px;
@@ -1953,9 +1957,8 @@ function renderCategoryDropdown(triggerId, panelId, selectedArr, onChange){
 
   let label;
   if(selectedArr.length===0) label = 'Tất cả hạng mục';
-  else if(selectedArr.length===1) label = categoryName(selectedArr[0]);
-  else label = `Đã chọn ${selectedArr.length} hạng mục`;
-  trigger.innerHTML = `${label} <span>▾</span>`;
+  else label = selectedArr.map(id=>categoryName(id)).join(', ');
+  trigger.innerHTML = `<span class="cat-filter-label-text">${label}</span><span>▾</span>`;
 
   panel.innerHTML = `<div class="cat-filter-list">` + categories.map(c=>{
     const checked = selectedArr.includes(c.id);
