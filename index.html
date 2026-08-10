@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="app-version" content="2026-08-09.6">
+<meta name="app-version" content="2026-08-10.1">
 <title>Quản lý thu chi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -605,6 +605,10 @@
         </div>
       </div>
       <button class="btn btn-ghost" id="clearHomeFilterBtn" style="margin-bottom:12px;">Bỏ lọc ngày tuỳ chỉnh</button>
+      <div class="cat-filter-dropdown" id="homeCatDropdown" style="margin-bottom:14px;">
+        <button class="cat-filter-trigger" id="homeCatTrigger" type="button">Tất cả hạng mục <span>▾</span></button>
+        <div class="cat-filter-panel" id="homeCatPanel" style="display:none;"></div>
+      </div>
       <div id="homeList"><div class="empty">Chưa có dữ liệu</div></div>
     </div>
   </div>
@@ -888,19 +892,33 @@
   <div id="tabAllStats" style="display:none;">
     <div class="card">
       <h2>Tài sản tích lũy gia đình</h2>
-      <div class="stat-row" style="margin-bottom:14px;">
-        <div class="stat lai" style="flex:1;"><div class="v" id="allAssetTotal" style="font-size:19px;">0</div><div class="l">Tổng tích lũy</div></div>
-      </div>
-      <label class="filter-label">Từ kinh doanh (sau trích quỹ)</label>
-      <div class="stat-row" style="margin-bottom:14px;">
-        <div class="stat lai"><div class="v" id="allBizTm">0</div><div class="l">Tiền mặt</div></div>
-        <div class="stat lai"><div class="v" id="allBizCk">0</div><div class="l">Chuyển khoản</div></div>
-      </div>
-      <label class="filter-label">Từ sinh hoạt</label>
-      <div class="stat-row">
-        <div class="stat lai"><div class="v" id="allHomeTm">0</div><div class="l">Tiền mặt</div></div>
-        <div class="stat lai"><div class="v" id="allHomeCk">0</div><div class="l">Chuyển khoản</div></div>
-      </div>
+      <table class="ymtable">
+        <thead>
+          <tr><th></th><th>Tiền mặt</th><th>Chuyển khoản</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Từ kinh doanh<br><span style="font-size:11px;color:var(--ink-soft);">(sau trích quỹ)</span></td>
+            <td id="allBizTm">0</td>
+            <td id="allBizCk">0</td>
+          </tr>
+          <tr>
+            <td>Từ sinh hoạt</td>
+            <td id="allHomeTm">0</td>
+            <td id="allHomeCk">0</td>
+          </tr>
+          <tr class="ym-strong">
+            <td>Tổng (theo nguồn)</td>
+            <td id="allSumTm">0</td>
+            <td id="allSumCk">0</td>
+          </tr>
+          <tr class="ym-divider"><td colspan="3"></td></tr>
+          <tr class="ym-strong">
+            <td>Tổng tích lũy</td>
+            <td colspan="2" id="allAssetTotal">0</td>
+          </tr>
+        </tbody>
+      </table>
       <p class="hint" style="margin-top:10px;margin-bottom:0;">Tổng tích lũy = Lũy kế Kinh doanh toàn thời gian (sau trích quỹ) + Lũy kế Sinh hoạt toàn thời gian.</p>
     </div>
 
@@ -976,6 +994,7 @@ let homeStatsRange='month';
 let homeStatsFilterFrom='';
 let homeStatsFilterTo='';
 let hsSelectedCategories=[];
+let homeSelectedCategories=[];
 
 const fmt=(n)=> (n||0).toLocaleString('vi-VN');
 const unformat=(s)=> parseInt((s||'0').replace(/\D/g,''),10)||0;
@@ -1565,8 +1584,13 @@ function filteredHomeTransactions(range, from, to){
 }
 
 function renderHomeTab(){
-  const list = [...filteredHomeTransactions(homeRange, homeFilterFrom, homeFilterTo)]
-    .sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  renderCategoryDropdown('homeCatTrigger', 'homeCatPanel', homeSelectedCategories, (arr)=>{ homeSelectedCategories=arr; renderHomeTab(); });
+
+  let list = [...filteredHomeTransactions(homeRange, homeFilterFrom, homeFilterTo)];
+  if(homeSelectedCategories.length>0){
+    list = list.filter(h=>homeSelectedCategories.includes(h.category));
+  }
+  list.sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   const listEl = $('homeList');
   if(list.length===0){
     listEl.innerHTML = '<div class="empty">Không có khoản nào trong khoảng đã chọn.</div>';
@@ -1923,47 +1947,50 @@ function buildMultiDonutGradient(segments){
   return `conic-gradient(${parts.join(', ')})`;
 }
 
-function renderCatFilterChips(){
-  const trigger = $('hsCatTrigger');
-  const panel = $('hsCatPanel');
+function renderCategoryDropdown(triggerId, panelId, selectedArr, onChange){
+  const trigger = $(triggerId);
+  const panel = $(panelId);
 
   let label;
-  if(hsSelectedCategories.length===0) label = 'Tất cả hạng mục';
-  else if(hsSelectedCategories.length===1) label = categoryName(hsSelectedCategories[0]);
-  else label = `Đã chọn ${hsSelectedCategories.length} hạng mục`;
+  if(selectedArr.length===0) label = 'Tất cả hạng mục';
+  else if(selectedArr.length===1) label = categoryName(selectedArr[0]);
+  else label = `Đã chọn ${selectedArr.length} hạng mục`;
   trigger.innerHTML = `${label} <span>▾</span>`;
 
   panel.innerHTML = `<div class="cat-filter-list">` + categories.map(c=>{
-    const checked = hsSelectedCategories.includes(c.id);
+    const checked = selectedArr.includes(c.id);
+    const cbId = panelId+'-chk-'+c.id;
     return `<div class="cat-check-row">
-      <input type="checkbox" id="chk-${c.id}" data-cat="${c.id}" ${checked?'checked':''}>
-      <label for="chk-${c.id}">${c.name}</label>
+      <input type="checkbox" id="${cbId}" data-cat="${c.id}" ${checked?'checked':''}>
+      <label for="${cbId}">${c.name}</label>
     </div>`;
   }).join('') + `</div>
     <div class="cat-filter-footer">
-      <button class="btn btn-ghost" id="catClearAllBtn">Bỏ chọn hết</button>
-      <button class="btn btn-primary" id="catDoneBtn">Xong</button>
+      <button class="btn btn-ghost" id="${panelId}-clearAll">Bỏ chọn hết</button>
+      <button class="btn btn-primary" id="${panelId}-done">Xong</button>
     </div>`;
 
   panel.querySelectorAll('input[type=checkbox]').forEach(cb=>{
     cb.addEventListener('change',()=>{
       const cat = cb.dataset.cat;
+      let newArr;
       if(cb.checked){
-        if(!hsSelectedCategories.includes(cat)) hsSelectedCategories = hsSelectedCategories.concat(cat);
+        newArr = selectedArr.includes(cat) ? selectedArr : selectedArr.concat(cat);
       }else{
-        hsSelectedCategories = hsSelectedCategories.filter(c=>c!==cat);
+        newArr = selectedArr.filter(c=>c!==cat);
       }
-      renderHomeStats();
+      onChange(newArr);
     });
   });
-  $('catClearAllBtn').onclick = ()=>{ hsSelectedCategories=[]; renderHomeStats(); };
-  $('catDoneBtn').onclick = ()=>{ panel.style.display='none'; };
+  $(panelId+'-clearAll').onclick = ()=> onChange([]);
+  $(panelId+'-done').onclick = ()=>{ panel.style.display='none'; };
 }
 
 document.addEventListener('click',(e)=>{
-  const dd = $('hsCatDropdown');
-  if(!dd) return;
-  if(!dd.contains(e.target)) $('hsCatPanel').style.display='none';
+  const dd1 = $('hsCatDropdown');
+  if(dd1 && !dd1.contains(e.target)) $('hsCatPanel').style.display='none';
+  const dd2 = $('homeCatDropdown');
+  if(dd2 && !dd2.contains(e.target)) $('homeCatPanel').style.display='none';
 });
 
 function renderCategoryDonut(data, type, prefix){
@@ -1994,7 +2021,7 @@ function renderCategoryDonut(data, type, prefix){
 }
 
 function renderHomeStats(){
-  renderCatFilterChips();
+  renderCategoryDropdown('hsCatTrigger', 'hsCatPanel', hsSelectedCategories, (arr)=>{ hsSelectedCategories=arr; renderHomeStats(); });
 
   let data = filteredHomeTransactions(homeStatsRange, homeStatsFilterFrom, homeStatsFilterTo);
   if(hsSelectedCategories.length>0){
@@ -2122,6 +2149,8 @@ function renderAllStats(){
   $('allBizCk').textContent = fmt(biz.ck);
   $('allHomeTm').textContent = fmt(home.tm);
   $('allHomeCk').textContent = fmt(home.ck);
+  $('allSumTm').textContent = fmt(totalTm);
+  $('allSumCk').textContent = fmt(totalCk);
 
   const currentYm = todayISO().slice(0,7);
   const chiSHThisMonth = homeTransactions
@@ -2541,6 +2570,11 @@ $('clearHsFilterBtn').addEventListener('click',()=>{
 $('hsCatTrigger').addEventListener('click',(e)=>{
   e.stopPropagation();
   const panel = $('hsCatPanel');
+  panel.style.display = (panel.style.display==='none') ? 'block' : 'none';
+});
+$('homeCatTrigger').addEventListener('click',(e)=>{
+  e.stopPropagation();
+  const panel = $('homeCatPanel');
   panel.style.display = (panel.style.display==='none') ? 'block' : 'none';
 });
 
