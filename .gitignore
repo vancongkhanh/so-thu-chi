@@ -1,0 +1,6 @@
+# Dữ liệu nhạy cảm — không đưa lên repo public
+data/
+*.xlsx
+
+# Cấu hình dev cục bộ
+.claude/
