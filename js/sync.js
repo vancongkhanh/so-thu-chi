@@ -5,6 +5,14 @@ async function initFirebase(){
     fbApp = firebase.initializeApp(firebaseConfig);
     fbAuth = firebase.auth();
     fbDb = firebase.firestore();
+    try{
+      // Bật cache offline (IndexedDB): lần mở sau app có thể đọc dữ liệu từ
+      // cache local ngay lập tức trong lúc chờ đồng bộ với server, thay vì
+      // luôn phải chờ trọn vẹn 1 round-trip mạng mới thấy gì. Nếu trình duyệt
+      // không hỗ trợ (vd Safari ẩn danh) hoặc lỗi thì bỏ qua, không ảnh hưởng
+      // luồng chạy chính.
+      await fbDb.enablePersistence({synchronizeTabs:true});
+    }catch(e){}
     fbDocRef = fbDb.collection('sothuchi').doc('main');
     await fbAuth.signInAnonymously();
     fbReady = true;
@@ -113,6 +121,10 @@ async function loadEntries(){
 }
 
 async function seedFirstRun(){
+  // SEED_DATA nằm trong data-seed.js (~25KB) — chỉ tải file này đúng lúc cần
+  // seed lần đầu, không tải sẵn ở mọi lần mở app.
+  const v = document.querySelector('meta[name="app-version"]').content;
+  await loadScriptOnce('js/data-seed.js?v=' + v);
   entries = SEED_DATA.slice();
   transactions = [];
   lockedDates = [...new Set(entries.map(e=>e.date))];

@@ -46,6 +46,17 @@ function attachThousandFormat(input){
     input.value = raw? fmt(raw):'';
   });
 }
+// Tải 1 file JS bên ngoài luồng script chính, dùng cho các file nặng mà
+// không phải lần chạy nào cũng cần tới (vd: data-seed.js chỉ dùng lúc seed lần đầu).
+function loadScriptOnce(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
 function fmtShort(n){
   if(!n) return '0';
   const sign = n<0 ? '-' : '';
