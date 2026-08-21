@@ -1,5 +1,38 @@
 let fbApp=null, fbAuth=null, fbDb=null, fbDocRef=null, fbReady=false, fbSuppressNextSnapshot=false;
 
+// Đăng nhập bằng 1 tài khoản Firebase Auth cố định (email nội bộ, không dùng để
+// nhận mail) — chỉ mật khẩu mới là bí mật thật. Cùng kiểu với trang "Giá vốn".
+const THUCHI_EMAIL = 'thuchi@so-thu-chi-khanh-ha.internal';
+
+// Giới hạn phiên đăng nhập 12 giờ kể từ lúc gõ mật khẩu — hạn chế rủi ro nếu
+// lỡ mất điện thoại hoặc người khác cầm máy dùng khi mình không để ý. Đây là
+// giới hạn tự làm ở phía app (Firebase Auth mặc định không tự hết hạn), nên
+// nếu đổi mật khẩu qua Firebase Console thì mọi phiên đang mở trên MỌI thiết
+// bị sẽ bị huỷ ngay lập tức — đó mới là biện pháp chính khi thực sự mất máy.
+const SESSION_TTL_MS = 12*60*60*1000;
+const SESSION_TS_KEY = 'thuchiLoginTs';
+
+function isSessionExpired(){
+  const ts = parseInt(localStorage.getItem(SESSION_TS_KEY)||'0',10);
+  return !ts || (Date.now()-ts) > SESSION_TTL_MS;
+}
+function markSessionActive(){
+  localStorage.setItem(SESSION_TS_KEY, String(Date.now()));
+}
+function clearSession(){
+  localStorage.removeItem(SESSION_TS_KEY);
+}
+
+function showLoginGate(){
+  $('loginGate').hidden = false;
+  $('appRoot').hidden = true;
+}
+function showApp(){
+  $('loginGate').hidden = true;
+  $('appRoot').hidden = false;
+  $('loginPassword').value = '';
+}
+
 async function initFirebase(){
   try{
     fbApp = firebase.initializeApp(firebaseConfig);
@@ -14,12 +47,52 @@ async function initFirebase(){
       await fbDb.enablePersistence({synchronizeTabs:true});
     }catch(e){}
     fbDocRef = fbDb.collection('sothuchi').doc('main');
-    await fbAuth.signInAnonymously();
     fbReady = true;
   }catch(e){
     fbReady = false;
     setStorageWarning(true);
   }
+}
+
+async function attemptLogin(password){
+  const btn = $('loginSubmitBtn');
+  const errEl = $('loginError');
+  errEl.textContent = '';
+  if(!fbReady){ errEl.textContent = 'Không kết nối được máy chủ, thử lại sau.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Đang kiểm tra...';
+  try{
+    await fbAuth.signInWithEmailAndPassword(THUCHI_EMAIL, password);
+    markSessionActive();
+  }catch(e){
+    errEl.textContent = 'Sai mật khẩu, thử lại.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Vào ứng dụng';
+}
+
+async function enforceSessionTTL(){
+  if(fbAuth && fbAuth.currentUser && isSessionExpired()){
+    await fbAuth.signOut();
+  }
+}
+
+async function bootAuth(){
+  if(isSessionExpired()) showLoginGate(); // quyết định nhanh, không cần đợi Firebase
+  await initFirebase();
+  if(!fbReady){ hideLoading(); showLoginGate(); return; }
+  await enforceSessionTTL();
+  fbAuth.onAuthStateChanged((user)=>{
+    if(user && !isSessionExpired()){
+      showApp();
+      loadEntries();
+    }else{
+      if(user) fbAuth.signOut();
+      clearSession();
+      hideLoading();
+      showLoginGate();
+    }
+  });
 }
 
 async function persistAll(){
@@ -83,15 +156,8 @@ function hideLoading(){
 }
 
 async function loadEntries(){
-  await initFirebase();
-  if(!fbReady){
-    // Can't reach Firebase (offline / misconfigured) — fall back to whatever
-    // was already in memory so the app doesn't crash, and keep the warning visible.
-    render();
-    hideLoading();
-    return;
-  }
-
+  // fbReady + đăng nhập đã được xác nhận xong ở bootAuth() trước khi hàm này
+  // được gọi — ở đây chỉ còn việc mở kết nối lắng nghe dữ liệu.
   fbDocRef.onSnapshot(async (doc)=>{
     if(fbSuppressNextSnapshot){
       // This snapshot is just an echo of our own write; state is already correct.

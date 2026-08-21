@@ -308,7 +308,13 @@ if(!SINHHOAT_ENABLED){
   // giống hệt như khi chưa có tính năng Sinh hoạt.
   $('childThongKe').classList.add('single-child');
 }
-loadEntries();
+
+$('loginForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  attemptLogin($('loginPassword').value);
+});
+
+bootAuth();
 
 // Kiểm tra bản mới: tải lại chính trang này (bỏ qua cache) và so sánh số phiên
 // bản khai báo trong thẻ meta "app-version". Nếu khác, hiện banner nhắc tải lại.
@@ -351,8 +357,9 @@ $('updateBanner').addEventListener('click', ()=> window.location.reload());
 checkForUpdate();
 setTimeout(checkForUpdate, 3000);
 setInterval(checkForUpdate, 2*60*1000);
+setInterval(enforceSessionTTL, 5*60*1000);
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'visible') checkForUpdate();
+  if(document.visibilityState === 'visible'){ checkForUpdate(); enforceSessionTTL(); }
 });
-window.addEventListener('focus', checkForUpdate);
-window.addEventListener('pageshow', checkForUpdate);
+window.addEventListener('focus', ()=>{ checkForUpdate(); enforceSessionTTL(); });
+window.addEventListener('pageshow', ()=>{ checkForUpdate(); enforceSessionTTL(); });

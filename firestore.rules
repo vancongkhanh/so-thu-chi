@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Chỉ tài khoản đăng nhập bằng đúng email cố định của app Thu chi mới
+    // đọc/ghi được — khớp với THUCHI_EMAIL trong js/sync.js. Đăng nhập ẩn
+    // danh (kiểu cũ) sẽ không còn quyền gì sau khi rules này được deploy.
+    function isThuChiUser() {
+      return request.auth != null &&
+        request.auth.token.email == 'thuchi@so-thu-chi-khanh-ha.internal';
+    }
+
+    match /sothuchi/{docId} {
+      allow read, write: if isThuChiUser();
+    }
+  }
+}

@@ -14,6 +14,7 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  [hidden]{display:none !important;}
   body{
     background: #ffffff;
     color:var(--ink);
@@ -131,6 +132,24 @@
   .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--paper-line);}
   .btn-row{display:flex;gap:10px;margin-top:4px;}
   .btn-row .btn{flex:1;}
+
+  .login-gate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:var(--paper);padding:24px;
+  }
+  .login-box{
+    background:var(--card);border-radius:var(--radius);padding:36px 28px;max-width:340px;width:100%;
+    text-align:center;display:flex;flex-direction:column;gap:14px;
+    border:1.5px solid var(--paper-line);
+  }
+  .login-box h1{font-family:'Space Mono',monospace;font-size:20px;margin:0;color:var(--ink);}
+  .login-box p{color:var(--ink-soft);font-size:13.5px;margin:0;}
+  .login-box input{
+    width:100%;padding:13px 14px;border-radius:10px;border:1.5px solid var(--paper-line);
+    font-size:16px;font-family:'Inter';text-align:center;background:#fffef9;color:var(--ink);
+  }
+  .login-box input:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .login-error{color:var(--red);font-size:13px;font-weight:600;min-height:1em;margin:0;}
 
   .date-field{position:relative;}
   .date-display{
