@@ -1,4 +1,5 @@
 let fbApp=null, fbAuth=null, fbDb=null, fbDocRef=null, fbReady=false, fbSuppressNextSnapshot=false;
+let snapshotListenerAttached=false;
 
 // Đăng nhập bằng 1 tài khoản Firebase Auth cố định (email nội bộ, không dùng để
 // nhận mail) — chỉ mật khẩu mới là bí mật thật. Cùng kiểu với trang "Giá vốn".
@@ -54,6 +55,13 @@ async function initFirebase(){
   }
 }
 
+// true trong lúc vừa gọi signInWithEmailAndPassword và đang chờ Firebase xác
+// nhận — để onAuthStateChanged (có thể bắn ra TRƯỚC khi await bên dưới chạy
+// tiếp, tuỳ thời điểm nội bộ của SDK) biết đây là 1 lượt đăng nhập vừa xảy ra,
+// không phải phiên cũ đã hết hạn. Tránh được race condition: đăng nhập đúng
+// mật khẩu nhưng bị tự đăng xuất ngược lại ngay lập tức.
+let pendingFreshLogin = false;
+
 async function attemptLogin(password){
   const btn = $('loginSubmitBtn');
   const errEl = $('loginError');
@@ -62,9 +70,11 @@ async function attemptLogin(password){
   btn.disabled = true;
   btn.textContent = 'Đang kiểm tra...';
   try{
+    pendingFreshLogin = true;
     await fbAuth.signInWithEmailAndPassword(THUCHI_EMAIL, password);
-    markSessionActive();
+    // Phần còn lại (đánh dấu phiên + vào app) do onAuthStateChanged xử lý.
   }catch(e){
+    pendingFreshLogin = false;
     errEl.textContent = 'Sai mật khẩu, thử lại.';
   }
   btn.disabled = false;
@@ -83,7 +93,8 @@ async function bootAuth(){
   if(!fbReady){ hideLoading(); showLoginGate(); return; }
   await enforceSessionTTL();
   fbAuth.onAuthStateChanged((user)=>{
-    if(user && !isSessionExpired()){
+    if(user && (pendingFreshLogin || !isSessionExpired())){
+      if(pendingFreshLogin){ markSessionActive(); pendingFreshLogin = false; }
       showApp();
       loadEntries();
     }else{
@@ -157,7 +168,11 @@ function hideLoading(){
 
 async function loadEntries(){
   // fbReady + đăng nhập đã được xác nhận xong ở bootAuth() trước khi hàm này
-  // được gọi — ở đây chỉ còn việc mở kết nối lắng nghe dữ liệu.
+  // được gọi — ở đây chỉ còn việc mở kết nối lắng nghe dữ liệu. Chỉ gắn đúng
+  // 1 lần: nếu phiên hết hạn rồi đăng nhập lại ngay trong cùng 1 lần mở app
+  // (không tải lại trang), tránh gắn chồng nhiều listener onSnapshot.
+  if(snapshotListenerAttached) return;
+  snapshotListenerAttached = true;
   fbDocRef.onSnapshot(async (doc)=>{
     if(fbSuppressNextSnapshot){
       // This snapshot is just an echo of our own write; state is already correct.
